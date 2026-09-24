@@ -186,3 +186,15 @@ engineering foundation** — not Kubernetes. Deliverables:
   metrics-server = experimentally validated, NOT implemented. Full report:
   docs/09-observability/tier-a-experiment.md; raw log:
   docs/09-observability/tier-a-observation.log. STOPPED at Phase 6 boundary.
+- **2026-09-24** — Phase 6 READ-ONLY host swap-driver characterization (Paul-authorized,
+  post-Tier-A). Findings: macOS pressure level 1 (NORMAL), 76% free, zero
+  throttled pages; swap 1281.5 MB of 2048 MB and DECLINING on an idle host
+  (1345.5 -> 1281.5 over ~25 min); swapins delta 0 over 30 s at rest — current
+  swap is cold-page residency, NOT active pressure. Docker VM process = 10.53 GB
+  of 16 GB host physical (dominant consumer); container set inside VM ~4.3-4.5 GiB.
+  The 07:11 swap step correlates with NO monitored container change (clickhouse
+  +/-8.3% normal variation; k3s RSS fell at the step; r=0.131); driver outside
+  monitored set — causality not established. Gate-design lesson recorded:
+  swap-used thresholds conflate residency with pressure; future gates should
+  use swap-activity rate + pressure level. Tier-B not cleared by this evidence.
+  Report: docs/09-observability/swap-driver-characterization.md. STOPPED.

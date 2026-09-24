@@ -44,8 +44,8 @@
   },
   "phase": 6,
   "phase_name": "Observability",
-  "status": "tier-a-experiment-complete-closed-by-swap-gate-awaiting-phase6-decision",
-  "next_action": "Tier-A metrics-server experiment complete: functional validation successful (kubectl top works, 16-20 Mi measured) but host swap gate triggered (625->1260 MB), causality uncertain, closed via documented rollback per conservative gate reading. metrics-server is experimentally validated, NOT an implemented capability. Awaiting Paul: re-run with re-validated baseline / host swap characterization / defer / VM-resize.",
+  "status": "phase6-tier-a-closed-swap-characterized-awaiting-next-decision",
+  "next_action": "Tier-A closed (swap gate, causality uncertain) + read-only swap-driver characterization complete: swap is cold-page residency, host pressure NORMAL, driver outside monitored set. Options for Paul: re-run Tier A with activity-based gate / extend host telemetry / proceed elsewhere / VM resize. Awaiting authorization.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {
