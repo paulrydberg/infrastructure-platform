@@ -25,10 +25,10 @@
     "protocol": "ssh",
     "verified": "2026-09-24"
   },
-  "phase": 4,
-  "phase_name": "CI/CD",
-  "status": "phase-4-complete-awaiting-phase-5-authorization",
-  "next_action": "Phase 4 complete: deterministic 2-job CI (validate+build) on GitHub-hosted runners, all gates green on main, both controlled failure modes demonstrated via PR #2 (closed unmerged), branch protection API-verified. Awaiting Paul's Phase 5 (GitOps/Argo CD) authorization. Note: full Argo CD exceeds the 1.5 GiB envelope — staged-window option documented in reduced-envelope-analysis.md.",
+  "phase": 5,
+  "phase_name": "GitOps (Argo CD)",
+  "status": "phase-5a-complete-awaiting-phase-5b-6-decision-gate",
+  "next_action": "Phase 5A complete: Argo CD v2.13.3 (chart 7.7.11) demonstrated full GitOps control loop within the 1.5 GiB envelope — measured ~209 MB pod memory, k3s total 1.07-1.09 GiB, drift self-heal, failure/recovery, staged teardown + permanent residency both verified. Awaiting Paul's decision: keep Argo resident permanently and/or authorize Phase 6 observability planning (does NOT fit alongside Argo under 1.5 GiB — VM resize or staged-window negotiation required).",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {

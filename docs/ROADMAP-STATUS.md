@@ -24,7 +24,7 @@ Docker-VM resource-negotiation decision, which requires a separate explicit OK).
 | 2 | Kubernetes | ✅ complete (A″ 1.5 GiB envelope) | k3s v1.31.2 steady 450-475 MiB/cap 1536; fundamentals+quota+self-heal+rollout-undo demonstrated; reconstruction Level 2 (Ready in ~8s); 20/20 protected untouched; stopped at Phase 2→3 gate |
 | 3 | Helm | ✅ complete | helm v3.16.3 (checksum-verified); platform-demo chart lint/render/dry-run green; install+upgrade+rollback+bad-image-recovery+reconstruction demonstrated; envelope respected (k3s 489 MiB max); stopped at Phase 3→4 gate |
 | 4 | CI/CD | ✅ complete | 2-job pipeline (validate+build) w/ pinned SHAs, checksum-gated tools, chart/image consistency, kubeconform; both controlled failure modes demonstrated (PR #2); protection API-verified; stopped at Phase 4→5 gate |
-| 5 | GitOps | 🔲 not started | Argo CD |
+| 5 | GitOps | ✅ Phase 5A complete | Argo CD v2.13.3 measured ~209 MB pod memory; control loop + drift self-heal + failure/recovery demonstrated; staged teardown AND permanent residency both verified within 1.5 GiB envelope; stopped at Phase 5 boundary |
 | 6 | Observability | 🔲 not started | Prometheus/Grafana/Loki/OTel |
 | 7 | Security | 🔲 not started | Trivy/Kyverno/SBOM |
 | 8 | AWS | 🔲 not started | Terraform/OpenTofu |

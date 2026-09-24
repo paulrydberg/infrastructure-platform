@@ -215,6 +215,25 @@
   via normal commits (d17482f, ab97a4c). Report:
   `docs/07-ci-cd/completion-report.md`. Awaiting Phase 5 (GitOps) authorization.
 
+## PROMPT 13 — Phase 5A Authorization (Staged GitOps/Argo CD Experiment)
+
+- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Status:** ✅ executed in full; STOPPED at Phase 5 boundary per phase boundary
+- **Scope granted:** staged resource-constrained Argo CD evaluation on the
+  unchanged 1.5 GiB envelope; minimum control-loop demonstration on the
+  existing platform-demo only; explicit resource gates; staged-vs-permanent
+  distinction required.
+- **Result:** control loop FULLY demonstrated (Git → Argo → k3s → Synced
+  Healthy; drift self-heal ≤10 s; invalid-image failure isolated with zero
+  downtime; restore converges in ~12 s). Measured Argo pod memory ~209 MB
+  total; k3s 1.07-1.09 GiB of 1.5 GiB cap; VM available 1864-1878 MB; swap
+  down; 20/20 protected clean. Staged teardown verified + permanent residency
+  measured viable. 4 honest failures recorded (values key mismatch,
+  stuck-ns finalizer, reinstall sequencing, stale controller cache) with
+  remediations. Report: `docs/08-gitops/completion-report-phase5a.md`.
+  Awaiting Paul's Phase 5B/6 decision gate (observability does NOT fit
+  alongside Argo under 1.5 GiB — separate negotiation required).
+
 ---
 
 ## Standing Instructions (from Paul, pre-prompt)
