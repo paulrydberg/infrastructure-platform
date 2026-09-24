@@ -163,6 +163,22 @@
   [M]/[D]/[E]/[A]/[U] kept distinct throughout. Decision A′/A″/B/C/D
   deferred to Paul. Artifact: `docs/05-kubernetes/reduced-envelope-analysis.md`.
 
+## PROMPT 10 — Phase 2 Implementation Authorization (A″, 1.5 GiB)
+
+- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Status:** ✅ executed in full; STOPPED at Phase 2→3 boundary per stop condition
+- **Scope granted:** A″ — k3s 1.5 GiB / 2 cores; no VM resize; no protected-workload
+  changes; no observability stack; staged stages 2.1–2.5 with per-step
+  measurement; hard stop conditions; staged-residency architecture.
+- **Result:** ALL stages passed with measured evidence — pre-start 2436 MB avg
+  (new 2304 MB criterion, documented pre-startup); k3s steady 450–475 MiB of
+  1536 cap; VM available 2065 MB after start; swap DECREASED 680→552 MB; 20/20
+  protected untouched; fundamentals demonstrated incl. quota enforcement,
+  self-heal (~5 s), bad-image isolation + rollout undo; reconstruction
+  down -v → up → Ready in ~8 s (Level 2). Completion report:
+  `docs/05-kubernetes/completion-report.md`. Awaiting Phase 3 (Helm)
+  authorization.
+
 ---
 
 ## Standing Instructions (from Paul, pre-prompt)

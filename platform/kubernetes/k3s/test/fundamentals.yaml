@@ -1,0 +1,78 @@
+# Stage 2.4 fundamentals test workload — minimal by design.
+# Demonstrates: namespace, quota, deployment, probes, resource limits,
+# security context, service. Removed after validation (staged residency).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-test
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: test-quota
+  namespace: platform-test
+spec:
+  hard:
+    requests.cpu: "500m"
+    requests.memory: 256Mi
+    limits.cpu: "1"
+    limits.memory: 512Mi
+    pods: "4"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  namespace: platform-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+        - name: demo
+          image: traefik/whoami:v1.10
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 64Mi
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo
+  namespace: platform-test
+spec:
+  selector:
+    app: demo
+  ports:
+    - port: 80
+      targetPort: 80

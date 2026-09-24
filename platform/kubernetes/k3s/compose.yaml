@@ -1,0 +1,58 @@
+# k3s local cluster — Phase 2 experiment (A″ envelope)
+#
+# Envelope: 1.5 GiB memory / 2 cores — hard limits, authorized 2026-09-24
+# based on the reduced-envelope analysis (docs/05-kubernetes/reduced-envelope-analysis.md)
+# after RC-1 aborted the 2.5 GiB envelope (docs/05-kubernetes/experiment-optiona-rc1-abort.md).
+#
+# Minimal footprint decisions:
+#   - sqlite datastore (no etcd) — single node
+#   - Traefik + ServiceLB + metrics-server DISABLED (no ingress/LB needed;
+#     resource measurement via docker stats + /proc, not metrics-server)
+#   - API server bound to host loopback ONLY (127.0.0.1:6443)
+#   - dedicated bridge network; default k3s CIDRs (10.42/16, 10.43/16) are
+#     conflict-free with the host LAN and Docker pools
+#   - state in a named volume -> clean destroy/recreate reconstruction cycles
+#
+# Security note (honest): k3s-in-Docker requires privileged mode on this
+# platform (cgroup/systemd namespacing requirements of the embedded kubelet
+# inside Docker Desktop's VM). Risk surface is bounded by: loopback-only API,
+# dedicated network, no host port exposure beyond 6443/loopback, and the fact
+# that the cluster hosts only project test workloads. Hardening alternatives
+# are recorded in docs/05-kubernetes/ for evaluation — this is a documented
+# known constraint, not an invisible one.
+
+name: infrastructure-platform-k3s
+
+services:
+  k3s:
+    image: rancher/k3s:v1.31.2-k3s1
+    container_name: k3s-server
+    restart: unless-stopped
+    command: >
+      server
+      --disable=traefik
+      --disable=servicelb
+      --disable=metrics-server
+      --write-kubeconfig=/output/kubeconfig.yaml
+      --write-kubeconfig-mode=600
+    privileged: true
+    environment:
+      K3S_KUBECONFIG_OUTPUT: /output/kubeconfig.yaml
+    ports:
+      - "127.0.0.1:6443:6443"
+    volumes:
+      - k3s-data:/var/lib/rancher/k3s
+      - ./kubeconfig:/output
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1536MiB
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+volumes:
+  k3s-data:

@@ -27,8 +27,8 @@
   },
   "phase": 2,
   "phase_name": "Kubernetes",
-  "status": "option-a-aborted-rc1-awaiting-operator-decision",
-  "next_action": "Rejection condition 1 triggered at pre-flight (VM available 2465MB < 3.0GiB threshold, measured directly). Paul to choose: A-prime (retry when VM memory recovers), A-double (reduced k3s cap 1.5GiB — needs new authorization), B (Docker VM resize), C (defer k8s, compose path), D (hardware/env change). No limits changed; no k3s started; protected workloads untouched.",
+  "status": "phase-2-complete-awaiting-phase-3-authorization",
+  "next_action": "A\" experiment complete: k3s v1.31.2 (1.5GiB/2-core envelope) validated — steady 450-475 MiB, fundamentals+quota+self-heal+rollout-undo demonstrated, reconstruction Level 2. Awaiting Paul's Phase 3 (Helm) authorization. Full Argo CD does NOT fit 1.5GiB (Phase 5 gate: staged 1.75GiB window option). Observability: Phase 6 gate.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {
