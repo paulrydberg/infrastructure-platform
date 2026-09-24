@@ -25,7 +25,7 @@ Docker-VM resource-negotiation decision, which requires a separate explicit OK).
 | 3 | Helm | ✅ complete | helm v3.16.3 (checksum-verified); platform-demo chart lint/render/dry-run green; install+upgrade+rollback+bad-image-recovery+reconstruction demonstrated; envelope respected (k3s 489 MiB max); stopped at Phase 3→4 gate |
 | 4 | CI/CD | ✅ complete | 2-job pipeline (validate+build) w/ pinned SHAs, checksum-gated tools, chart/image consistency, kubeconform; both controlled failure modes demonstrated (PR #2); protection API-verified; stopped at Phase 4→5 gate |
 | 5 | GitOps | ✅ Phase 5A complete | Argo CD v2.13.3 measured ~209 MB pod memory; control loop + drift self-heal + failure/recovery demonstrated; staged teardown AND permanent residency both verified within 1.5 GiB envelope; stopped at Phase 5 boundary |
-| 6 | Observability | 🔲 not started | Prometheus/Grafana/Loki/OTel |
+| 6 | Observability | 🔄 capacity analysis complete (READ-ONLY) | Tier A (metrics-server) FITS envelope; Tier B tight; Tier B+ requires VM resize or staging; nothing installed; awaiting Paul's architecture choice |
 | 7 | Security | 🔲 not started | Trivy/Kyverno/SBOM |
 | 8 | AWS | 🔲 not started | Terraform/OpenTofu |
 | 9 | Local-to-Cloud Promotion | 🔲 not started | |
@@ -146,3 +146,17 @@ engineering foundation** — not Kubernetes. Deliverables:
   hardcoded checksum; .sha256sum filename mismatch; kubectl dry-run needs
   API server → kubeconform). Protection API-verified. Report:
   docs/07-ci-cd/completion-report.md. STOPPED at Phase 4→5 boundary.
+- **2026-09-24** — Phase 5A EXECUTED on Paul's authorization. Argo CD v2.13.3
+  (chart 7.7.11) demonstrated the full GitOps control loop on the 1.5 GiB
+  envelope: measured ~209 MB pod memory, drift self-heal ≤10 s, invalid-image
+  failure isolated zero-downtime, restore ~12 s, staged teardown AND permanent
+  residency both verified. 4 honest failures + remediations documented.
+  Report: docs/08-gitops/completion-report-phase5a.md. STOPPED at Phase 5
+  boundary. (Also: one git-state slip by the agent — Phase 5A commit initially
+  landed on a leftover test branch, cherry-picked to main, branch removed.)
+- **2026-09-24** — Phase 6 READ-ONLY capacity analysis EXECUTED. Nothing
+  installed; Argo preserved (Synced Healthy). Baseline: VM avail ~1840 MB,
+  k3s 1.05 GiB/cap, Argo ~174 MB, storage not binding (596 GiB free in VM).
+  Decision matrix: Tier A FITS; Tier B tight; Tier B+ VM-resize-or-staged;
+  Tier C not justified. Recommendation: Tier A experiment. Choice deferred
+  to Paul. Artifact: docs/09-observability/capacity-analysis.md.

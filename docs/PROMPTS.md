@@ -234,6 +234,22 @@
   Awaiting Paul's Phase 5B/6 decision gate (observability does NOT fit
   alongside Argo under 1.5 GiB — separate negotiation required).
 
+## PROMPT 14 — Phase 6 Authorization (Observability Capacity Analysis, READ-ONLY)
+
+- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Status:** ✅ analysis complete; STOPPED at implementation decision boundary
+- **Scope granted:** READ-ONLY capacity analysis with Argo preserved intact;
+  tiers defined; multi-sample baseline; storage analysis; decision matrix;
+  no installation; no resource changes.
+- **Result:** baseline measured (VM avail ~1840 MB avg; k3s 1.05 GiB of cap;
+  Argo ~174 MB per-component; swap 495-657 fluctuating; API healthy 0.28-0.34s;
+  storage NOT binding — 596 GiB free in VM). Decision matrix: Tier A
+  (metrics-server) FITS CURRENT ENVELOPE; Tier B FITS WITH TIGHT LIMITS;
+  Tier B+ (Prometheus) STAGED ONLY or REQUIRES VM RESIZE; Tier C NOT
+  CURRENTLY JUSTIFIED. Recommendation: Tier A experiment next (converts [E]
+  sizing to [M]). Choice deferred to Paul. Artifact:
+  `docs/09-observability/capacity-analysis.md`.
+
 ---
 
 ## Standing Instructions (from Paul, pre-prompt)
