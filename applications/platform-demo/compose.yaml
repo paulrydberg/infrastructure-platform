@@ -1,0 +1,45 @@
+# platform-demo compose — Phase 1 lifecycle validation
+#
+# Coexistence discipline (constraints.md):
+#   - explicit resource limits so this workload can never starve the
+#     20 protected production containers sharing this Docker instance
+#   - dedicated compose project name (infrastructure-platform-demo)
+#   - dedicated internal network; no host port conflicts (binds 8081)
+#   - restart policy = the deterministic recovery mechanism under test
+
+name: infrastructure-platform-demo
+
+services:
+  platform-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: platform-demo:0.1.0
+    container_name: platform-demo
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      PORT: "8080"
+      READY_AFTER_SECONDS: "1"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2).status==200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+        reservations:
+          cpus: "0.10"
+          memory: 64M
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
