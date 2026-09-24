@@ -25,7 +25,7 @@ debt and must be recorded in the Reconstruction Manifest (spec §32).
 
 | Field | Entry |
 |-------|-------|
-| Inputs | GitHub repo `paulrydberg/infrastructure-platform` (pending authorization/creation) |
+| Inputs | GitHub repo `paulrydberg/infrastructure-platform` (**CREATED 2026-09-24, public**) |
 | Preconditions | network + GitHub auth (SSH key or gh token) |
 | Bootstrap | `git clone git@github.com:paulrydberg/infrastructure-platform.git` |
 | Outputs | full documentation set (verbatim specs, discovery, ADRs, roadmap) |
@@ -33,7 +33,7 @@ debt and must be recorded in the Reconstruction Manifest (spec §32).
 | Validation | file count + SHA-256 spot check vs manifest |
 | External dependencies | github.com availability |
 | Known exceptions | none — docs are fully self-contained |
-| **Current status** | ⚠️ **CONTRACT NOT YET SATISFIED** — nothing is pushed to GitHub yet; the docs exist only on the host (Phase 1 first action) |
+| **Current status** | ✅ **SATISFIED (2026-09-24)** — repo live, initial commit pushed; contract now testable |
 
 ## Subsystem 2–N: (empty by design)
 
