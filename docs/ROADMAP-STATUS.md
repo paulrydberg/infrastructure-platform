@@ -369,3 +369,22 @@ engineering foundation** — not Kubernetes. Deliverables:
   = supplemental, consistent with source-controlled docs, repo remains
   reconstructible without it. CI untouched (run 36041814661 green @
   dc92979); 20/20 tests green; NO enforcement change applied.
+  **P1-P5 HARDENING IMPLEMENTED & VERIFIED (enforcement NOT enabled):**
+  policy-review preconditions closed. P1 minimum Trivy-JSON schema
+  validation (derived from pinned scanner's real output; fatal =
+  missing/non-list Results, non-list vulns, missing identity fields,
+  wrong types, zero blocks carrying a Vulnerabilities collection —
+  closes the verified silent-PASS window); P2 severity handling
+  (missing/malformed -> retained as UNKNOWN + R3-visible, never LOW,
+  never skipped, never satisfies R1; lowercase canonicalized); P3
+  provenance (run_id/image/scanner_version in every verdict, null when
+  absent, survives UNKNOWN); P4 policy_version (7c-policy-1.0.0)
+  distinct from evaluator_version (7c-shadow-1.1.0) + schema_version 2;
+  P5 enforcement/rollback exit-code contract unit-tested (--enforce:
+  FAIL/UNKNOWN exit 1, WARN/PASS exit 0; shadow always 0; rollback
+  restores shadow) — CI does NOT pass --enforce. 50/50 tests green.
+  Real-artifact compatibility: hardened evaluator re-run on Cycles 1/2/3
+  scan JSONs — substantive verdicts unchanged (UNKNOWN/WARN/WARN,
+  65/65 persistent) + provenance + schema_validated on all three. CI
+  diff additive-only (provenance env/args; zero --enforce usage). No
+  runtime infrastructure changes; LLM inference 0.

@@ -295,12 +295,21 @@ jobs:
       - name: shadow policy evaluation (R1/R2/R3/R4 — never blocking)
         run: |
           helm template platform-demo platform/helm/platform-demo > /tmp/rendered-shadow.yaml
+          # P3 provenance: run/image/scanner recorded into the verdict;
+          # P4: policy_version + evaluator_version emitted by the evaluator.
+          # NO --enforce flag: CI remains shadow mode (enforcement is a
+          # separate explicit authorization gate).
+          POLICY_IMAGE_REF="platform-demo:0.1.0" \
+          POLICY_SCANNER_VERSION="0.70.0" \
           python3 tools/policy/shadow_evaluator.py \
             --current trivy-report.json \
             --previous /tmp/previous-trivy-report.json \
             --rendered /tmp/rendered-shadow.yaml \
             --exceptions tools/policy/security-exceptions.json \
             --commit "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" \
+            --image "platform-demo:0.1.0" \
+            --scanner-version "0.70.0" \
             --out shadow-verdict.json
           # Observational guarantee: a WOULD_FAIL verdict is still a
           # successful run. The verdict is recorded, never enforced.
