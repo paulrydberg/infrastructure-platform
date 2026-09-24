@@ -303,3 +303,21 @@ engineering foundation** — not Kubernetes. Deliverables:
   behind >=2 shadow-mode cycles with recorded verdicts + explicit Paul
   authorization. Deliverables: phase7c-policy-simulation.md, ADR-0005.
   CI remains evidence mode; nothing wired in.
+  7C policy-model extension (same day, Paul-authorized): full model
+  dimensions (fix-availability incl. unknown, age candidates 7-90d,
+  exception states, compensating controls, reachability where evidenced)
+  + four policy families simulated across THREE historical states (7A
+  baseline CRIT 2/HIGH 16; post-base-remediation CRIT 0/HIGH 10 with
+  inventory newly surfaced; current identical artifact). Consequences:
+  Policy A fails at every state incl. today; B catches historical
+  Criticals, 0 failures today; C cannot be honest without JSON dates;
+  D bounds the no-fix population via expiring Git-tracked exceptions.
+  Eighth unique HIGH explicitly identified from artifact (14456/45447/
+  53612/53613/53614/76642/78408/78410; 5 fix-listed unique / 3 no-fix;
+  7 fix pairs — 14456+45447 dual-package). Exception model + 90d expiry
+  proposal, no-fix handling, new-CVE vs project-change discrimination
+  (via previous-run diff), base-refresh differential design, FP
+  lifecycle (KSV-0118 precedent), shadow-mode record schema and noise
+  thresholds, Kyverno/registry boundary tables: all documented in
+  phase7c-policy-model.md; ADR-0005 refined. STILL NOT IMPLEMENTED —
+  CI untouched, enforcement unauthorized.

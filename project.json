@@ -44,8 +44,8 @@
   },
   "phase": 6,
   "phase_name": "Observability",
-  "status": "phase-7c-policy-designed-and-simulated-awaiting-shadow-mode-authorization",
-  "next_action": "7C policy selected by historical simulation (ADR-0005): R1 CRITICAL-with-fix + R2 persistence + R4 rendered-config gate; R3 warning channel. Simulation: FAIL@7A baseline, PASS@7B. NOT implemented - CI untouched. Next: shadow-mode implementation requires separate authorization.",
+  "status": "phase-7c-policy-modeled-and-simulated-awaiting-shadow-mode-authorization",
+  "next_action": "7C policy fully modeled (4 families x 3 historical states; ADR-0005 refined): R1/R2/R4 stand, D-layer expiring exceptions designed (90d proposal). NOT implemented, CI evidence-mode untouched. Next gate: shadow-mode implementation authorization.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {

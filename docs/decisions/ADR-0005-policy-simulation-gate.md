@@ -65,3 +65,17 @@ prevents evidence-document findings from blocking deployment configuration.
 - docs/07-security/phase7c-proposal.md (original design)
 - docs/07-security/security-debt-register.md (dispositions)
 - ADR-0004 (registry-dependent deferral, unchanged)
+
+## Refinement (2026-09-24, policy-model pass)
+
+The full policy model (docs/07-security/phase7c-policy-model.md) simulated
+the four candidate families (A severity-only, B severity+fix, C +age,
+D +exceptions) against three historical states (7A baseline; post-base-
+remediation; current). Consequences observed: A fails at every state
+including today (permanent noise); B catches the historical Criticals but
+lets fix-listed HIGHs persist unaddressed; C requires date-carrying scan
+output (JSON) before it can be honest; D gives the no-fix population a
+bounded, auditable home via expiring exceptions. The R1/R2/R4 selection
+stands; the D-layer exception model (Git-tracked, expiring, review-gated)
+is carried into the shadow-mode design as the terminal state of the same
+policy. Shadow mode and enforcement remain unauthorized.
