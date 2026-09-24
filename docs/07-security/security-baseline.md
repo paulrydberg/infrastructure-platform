@@ -121,6 +121,17 @@ reproducible claim).
   resident cluster infrastructure — Phase 6 lessons applied).
 - **Cosign/signing:** deferred; SBOM+digest identity chain is the 7A scope.
 
+
+## 9b. Honest CI failure #1 (preserved)
+
+The first 7A commit placed the scanners in a standalone `security` job.
+GitHub-hosted runners are ephemeral per job: the image built in `build`
+did not exist on the security job's runner (Trivy FATAL: unable to find
+platform-demo:0.1.0; run failed). Correction: scanner steps re-homed into
+the build job immediately after the image build/tests — scanners run
+against the actual artifact on the same runner. Lesson: scan the artifact
+in the job that builds it, or promote via a registry first.
+
 ## 10. Resource impact
 
 Zero on the Mac Mini: all scanning on GitHub-hosted runners; no resident

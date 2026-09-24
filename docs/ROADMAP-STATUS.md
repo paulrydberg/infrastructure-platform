@@ -231,3 +231,9 @@ engineering foundation** — not Kubernetes. Deliverables:
   BLOCKED/REMEDIATED/VERIFIED distinctions established; nothing BLOCKED).
   STOPPED at 7A boundary. 7B (policy from baseline -> enforcement) requires
   separate authorization.
+  7A honest failure #1 (preserved): the first 7A push placed scanners in a
+  standalone security job; GitHub-hosted runners are ephemeral per job, so
+  the image built in the build job did not exist there (trivy FATAL: image
+  not found; run failed). Correction: scanner steps re-homed INTO the build
+  job right after image build/tests. Lesson: scan the artifact in the job
+  that builds it, or promote the image via a registry.
