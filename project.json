@@ -44,8 +44,8 @@
   },
   "phase": 6,
   "phase_name": "Observability",
-  "status": "phase-7c-two-shadow-cycles-verified-awaiting-policy-review-gate",
-  "next_action": "Cycles 1+2 real & verified: R2 persistence 65/65 correct vs independent JSON reconciliation; identity audited; no-fix HIGHs corrected to 0 (JSON authoritative; table extraction error fixed in docs/fixtures). Ready for policy-review/enforcement decision gate.",
+  "status": "phase-7c-policy-review-complete-ready-with-preconditions-enforcement-not-enabled",
+  "next_action": "Policy review: READY WITH REQUIRED PRECONDITIONS (P1 schema validation, P2 severity-absent visibility, P3 provenance fields, P4 policy_version, P5 enforcement/rollback tests). Enforcement contract proposed (phase7c-policy-review.md), NOT activated. Next gate: Paul authorizes P1-P5 implementation + shadow->enforcement flip.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {

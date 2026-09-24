@@ -354,3 +354,18 @@ engineering foundation** — not Kubernetes. Deliverables:
   — it used JSON correctly). 20 tests green. Two real cycles complete;
   shadow system ready for the separate policy-review/enforcement gate.
   Enforcement NOT enabled.
+  **POLICY REVIEW GATE COMPLETE (docs-only; enforcement NOT enabled):**
+  full 7C policy review from 3 real shadow-cycle artifacts + evaluator
+  probes. Verdict: READY WITH REQUIRED PRECONDITIONS — proposed
+  enforcement contract defined (FAIL = R1 crit+fix unexcepted OR R4
+  failure OR expired-exception; WARN = R3/R2 records; UNKNOWN never
+  PASS; deterministic precedence). Probes found one silent-PASS window
+  (structurally-empty scan + history) and missing-field permissiveness
+  -> preconditions P1 (minimum JSON schema validation), P2 (severity-
+  absent visibility), P3 (run-id/image/scanner-version in artifact),
+  P4 (policy_version), P5 (enforcement + rollback unit tests) — all
+  documented with evidence in phase7c-policy-review.md; single-flag
+  rollback design recorded. Skill audit: infrastructure-platform-security
+  = supplemental, consistent with source-controlled docs, repo remains
+  reconstructible without it. CI untouched (run 36041814661 green @
+  dc92979); 20/20 tests green; NO enforcement change applied.
