@@ -102,6 +102,22 @@
 - **Recorded in:** PROMPTS.md (here), ROADMAP-STATUS.md, project.json,
   docs/00-project-origin/, OPERATING-INSTRUCTIONS.md
 
+## PROMPT 6 — Phase 1 Authorization (Repository Creation + Container Foundation)
+
+- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Status:** ✅ executed in full; stopped at Phase 1→2 boundary
+- **Scope granted:** create PUBLIC repo `paulrydberg/infrastructure-platform`
+  (with pre-push secret/sanitization rules, .gitignore, security boundary,
+  honest implemented/planned distinction, no manufactured history); then
+  execute Phase 1 per existing scope/exit criteria.
+- **Not authorized (respected):** touching production containers, destructive
+  host changes, extra repos, AWS, premature Kubernetes, GPU/local-LLM.
+- **Result:** repo created public + protected + security features verified
+  (ADR-0003); Phase 1 implemented (platform-demo 0.1.0, bootstrap validation,
+  CI gates); PR #1 CI-green merged; v0.1.0 tagged + released; completion
+  report at `docs/03-foundation/completion-report.md`. Awaiting Phase 2
+  authorization.
+
 ---
 
 ## Standing Instructions (from Paul, pre-prompt)

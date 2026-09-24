@@ -5,12 +5,13 @@
 > every session or work item. The master spec's §79 defines Phases 0–19;
 > Amendment 1 adds the GitHub/portfolio workstream.
 
-**Last updated:** 2026-09-24 (Phase 0 complete)
-**Current phase:** Phase 0 — Discovery ✅ COMPLETE (read-only scope honored)
-**Current status:** Discovery report delivered; stopped at Phase 0→1
-authorization boundary. Awaiting Paul's decisions: (1) create repo
-`paulrydberg/infrastructure-platform`, (2) visibility (public recommended),
-(3) Phase 1 implementation scope.
+**Last updated:** 2026-09-24 (Phase 1 complete; released v0.1.0)
+**Current phase:** Phase 1 — Local Container Foundation ✅ COMPLETE
+**Current status:** Repo live (public, protected, security-verified);
+platform-demo 0.1.0 tested incl. destroy→rebuild reconstruction; CI green;
+v0.1.0 released. Stopped at Phase 1→2 authorization boundary.
+**Next gate:** Paul's authorization for Phase 2 — Kubernetes (incl. the
+Docker-VM resource-negotiation decision, which requires a separate explicit OK).
 
 ---
 
@@ -19,7 +20,7 @@ authorization boundary. Awaiting Paul's decisions: (1) create repo
 | Phase | Name | Status | Notes |
 |-------|------|--------|-------|
 | 0 | Discovery | ✅ complete | Read-only; discovery report delivered; stopped at boundary |
-| 1 | Local Container Foundation | 🔲 not started | Docker/Compose/WUD |
+| 1 | Local Container Foundation | ✅ complete | platform-demo 0.1.0 + bootstrap + CI + v0.1.0; PR #1 CI-green; reconstruction demonstrated (Level 1) |
 | 2 | Kubernetes | 🔲 not started | k3s or justified alternative |
 | 3 | Helm | 🔲 not started | |
 | 4 | CI/CD | 🔲 not started | GitHub Actions |
@@ -49,8 +50,8 @@ Legend: 🔲 not started · 🔄 in progress · ✅ complete · ⏸️ blocked �
 | GitHub Portfolio & Repo Architecture Gap Analysis | ✅ done | Folded into 15-point discovery below |
 | 15-point repository/portfolio discovery | ✅ done | `docs/01-discovery/github-portfolio-and-repository-architecture.md` (READ-ONLY, honored) |
 | ADR-0011 repository architecture | 🔄 analysis complete, ADR pending | Monorepo→hybrid recommended; ADR written at repo-creation authorization |
-| Repository source-of-truth matrix | 🔲 not started | §13 |
-| Cross-repo dependency model | 🔲 not started | §14 |
+| Repository source-of-truth matrix | ✅ done v1 | `docs/architecture/repository-source-of-truth.md` (Amendment 2) |
+| Cross-repo dependency model | ✅ done v1 | In same doc (monorepo stage: none; rules defined for future splits) |
 | Platform Reconstruction Manifest | 🔲 not started | §15 |
 | GitHub Projects setup | 🔲 not started | §16 — only as work becomes real |
 | Portfolio docs tree (docs/portfolio/) | 🔲 not started | §28 — only with real content |
@@ -108,3 +109,14 @@ engineering foundation** — not Kubernetes. Deliverables:
   career-evidence/engineering-evidence.md); OPERATING-INSTRUCTIONS updated.
   Phase 0 conclusion unchanged (monorepo → hybrid). Documentation-only — no
   repositories touched. Authorization boundary intact.
+- **2026-09-24** — Phase 1 EXECUTED on Paul's authorization. Repository
+  `paulrydberg/infrastructure-platform` created PUBLIC after verified
+  sanitization (IPs/email/private names redacted); branch protection +
+  secret scanning + push protection + Dependabot enabled (ADR-0003).
+  Phase 1: platform-demo 0.1.0 (pinned/non-root/healthcheck/limits),
+  bootstrap.sh (10 checks, idempotent), CI (5 gates). All lifecycle tests
+  passed incl. kill-PID1 self-recovery and destroy→rebuild-from-source
+  (Reproducibility Level 0→1). Real workflow: branch → PR #1 → CI green →
+  merge → tag v0.1.0 → GitHub release. WUD evaluated → deferred to Phase 4+
+  (needs registry). Coexisting production containers untouched (count
+  verified). STOPPED at Phase 1→2 boundary.

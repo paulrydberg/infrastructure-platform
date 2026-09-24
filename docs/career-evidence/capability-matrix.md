@@ -11,7 +11,12 @@ Functional / Tested / Production-like / Operational / Continuously Validated.
 | Linux/macOS system administration | operator environment; Phase 0 discovery | Functional (environment-level) | no — not yet a project artifact | evidence through bootstrap + ops docs |
 | Docker operations | 20 production containers on host (other projects) | Functional (environment-level) | no | this project's own versioned workloads |
 | Documentation engineering | 30-file doc set, ADRs, verbatim records | Functional | yes (once repo exists) | CI link validation (Phase 4) |
-| Repository/Git strategy | Phase 0 analysis, ADR-0001/0002, source-of-truth matrix | Design→Functional at repo creation | pending repo creation | repo itself |
+| Repository/Git strategy | Phase 0 analysis, ADR-0001/0002/0003, source-of-truth matrix | Functional | **yes — repo live, protected** | release cadence as work continues |
+| Container build/orchestration | platform-demo 0.1.0 (pinned base, non-root, healthcheck, resource limits, compose) | **Tested** | **yes — v0.1.0 release** | registry publication (Phase 4) |
+| CI validation gates | ci.yml: secret scan, syntax, compose config, doc links — green run on PR #1 | **Tested** | **yes — Actions runs public** | build+artifact jobs (Phase 4) |
+| Bootstrap validation | bootstrap.sh, 10 checks, idempotent ×2 verified | **Tested** | **yes** | installation automation (Phase 2) |
+| Release management | v0.1.0 tag + GitHub release with honest notes | Functional | **yes** | cadence per phase |
+| Reconstruction (app-level) | destroy → rebuild from source demonstrated (Level 1) | **Tested** | **yes — PR #1 evidence** | cluster-level (Phase 2+) |
 | Kubernetes | none | Not implemented | no | Phase 2 |
 | Helm | none | Not implemented | no | Phase 3 |
 | CI/CD (GitHub Actions) | none | Not implemented | no | Phase 4 |
