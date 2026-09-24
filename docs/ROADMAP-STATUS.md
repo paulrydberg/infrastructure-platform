@@ -22,7 +22,7 @@ Docker-VM resource-negotiation decision, which requires a separate explicit OK).
 | 0 | Discovery | ✅ complete | Read-only; discovery report delivered; stopped at boundary |
 | 1 | Local Container Foundation | ✅ complete | platform-demo 0.1.0 + bootstrap + CI + v0.1.0; PR #1 CI-green; reconstruction demonstrated (Level 1) |
 | 2 | Kubernetes | ✅ complete (A″ 1.5 GiB envelope) | k3s v1.31.2 steady 450-475 MiB/cap 1536; fundamentals+quota+self-heal+rollout-undo demonstrated; reconstruction Level 2 (Ready in ~8s); 20/20 protected untouched; stopped at Phase 2→3 gate |
-| 3 | Helm | 🔲 not started | |
+| 3 | Helm | ✅ complete | helm v3.16.3 (checksum-verified); platform-demo chart lint/render/dry-run green; install+upgrade+rollback+bad-image-recovery+reconstruction demonstrated; envelope respected (k3s 489 MiB max); stopped at Phase 3→4 gate |
 | 4 | CI/CD | 🔲 not started | GitHub Actions |
 | 5 | GitOps | 🔲 not started | Argo CD |
 | 6 | Observability | 🔲 not started | Prometheus/Grafana/Loki/OTel |
@@ -120,3 +120,16 @@ engineering foundation** — not Kubernetes. Deliverables:
   merge → tag v0.1.0 → GitHub release. WUD evaluated → deferred to Phase 4+
   (needs registry). Coexisting production containers untouched (count
   verified). STOPPED at Phase 1→2 boundary.
+- **2026-09-24** — Phase 2: evaluation + RC-1 abort of 2.5 GiB Option A
+  (direct measurement superseded derived estimate); reduced-envelope analysis;
+  A″ authorized and executed — k3s v1.31.2 on 1.5 GiB/2-core envelope,
+  fundamentals demonstrated, Level 2 reconstruction. STOPPED at Phase 2→3 gate.
+- **2026-09-24** — Phase 3 EXECUTED on Paul's authorization. Helm v3.16.3
+  (checksum-verified after honest from-memory-checksum failure); real chart
+  for platform-demo (pinned 0.1.0, security-preserving); lint/template/
+  server-dry-run green; install → upgrade → rollback → bad-image-via-Helm →
+  rollback → release reconstruction all demonstrated. Honest failure:
+  /tmp chart drift caused ErrImagePull on first reconstruction; remediated
+  from Git source; lesson recorded (Git path is the only Helm source).
+  Envelope respected (k3s max 489 MiB); protected workloads clean. Report:
+  docs/06-helm/completion-report.md. STOPPED at Phase 3→4 boundary.

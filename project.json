@@ -25,10 +25,10 @@
     "protocol": "ssh",
     "verified": "2026-09-24"
   },
-  "phase": 2,
-  "phase_name": "Kubernetes",
-  "status": "phase-2-complete-awaiting-phase-3-authorization",
-  "next_action": "A\" experiment complete: k3s v1.31.2 (1.5GiB/2-core envelope) validated — steady 450-475 MiB, fundamentals+quota+self-heal+rollout-undo demonstrated, reconstruction Level 2. Awaiting Paul's Phase 3 (Helm) authorization. Full Argo CD does NOT fit 1.5GiB (Phase 5 gate: staged 1.75GiB window option). Observability: Phase 6 gate.",
+  "phase": 3,
+  "phase_name": "Helm",
+  "status": "phase-3-complete-awaiting-phase-4-authorization",
+  "next_action": "Phase 3 complete: helm v3.16.3 (checksum-verified), platform-demo chart (pinned, security-preserving), lint/render/dry-run green, install/upgrade/rollback/bad-image-recovery/reconstruction demonstrated, envelope respected. Awaiting Paul's Phase 4 (GitHub Actions CI/CD expansion) authorization. GitOps (Argo CD) Phase 5 gate; observability Phase 6 gate.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {

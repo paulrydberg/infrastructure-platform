@@ -1,0 +1,41 @@
+# Default values for platform-demo. Pinned, no floating references.
+replicaCount: 1
+
+image:
+  repository: platform-demo
+  tag: "0.1.0"          # pinned — never floating/latest (immutable artifact principle)
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 32Mi
+  limits:
+    cpu: 200m
+    memory: 64Mi
+
+# Security posture preserved from the Phase 2 fundamentals demonstration:
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+
+probes:
+  readiness:
+    path: /health
+    port: 8080
+    initialDelaySeconds: 2
+    periodSeconds: 5
+  liveness:
+    path: /health
+    port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+nameOverride: ""
+fullnameOverride: ""

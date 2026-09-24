@@ -1,0 +1,15 @@
+# platform-demo Helm chart — Phase 3
+#
+# Packages the existing platform-demo workload (applications/platform-demo,
+# v0.1.0 behavior preserved exactly) for Kubernetes deployment.
+# The image is built locally by compose; the chart references it by exact
+# tag (pinned), pulled by k3s containerd from the local Docker image cache
+# via the k3s-registry mirror policy of imagePullPolicy: IfNotPresent with
+# a local build loaded into the k3s containerd store (documented in the
+# phase-3 report).
+apiVersion: v2
+name: platform-demo
+description: First versioned container workload of infrastructure-platform, packaged for Kubernetes lifecycle validation.
+type: application
+version: 0.1.0          # chart version (SemVer, bumped per chart change)
+appVersion: "0.1.0"     # application version this chart packages

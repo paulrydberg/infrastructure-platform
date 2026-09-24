@@ -179,6 +179,21 @@
   `docs/05-kubernetes/completion-report.md`. Awaiting Phase 3 (Helm)
   authorization.
 
+## PROMPT 11 — Phase 3 Authorization (Helm)
+
+- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Status:** ✅ executed in full; STOPPED at Phase 3→4 boundary per completion boundary
+- **Result:** Helm v3.16.3 installed (checksum-verified after an honest
+  from-memory checksum failure — fetch-then-verify recorded); real chart for
+  platform-demo (pinned 0.1.0, security context preserved); lint/template/
+  server-dry-run green; install → upgrade(0.2.0, replicas 2) → rollback →
+  bad-image-via-Helm → rollback → uninstall/reinstall-reconstruction all
+  demonstrated; one honest failure: /tmp chart copy had drifted from Git
+  (tag mutation) causing ErrImagePull on first reconstruction — remediated
+  from Git source, lesson recorded (Git path is the only source for Helm ops).
+  Envelope respected (k3s max 489 MiB); protected workloads clean throughout.
+  Report: `docs/06-helm/completion-report.md`.
+
 ---
 
 ## Standing Instructions (from Paul, pre-prompt)
