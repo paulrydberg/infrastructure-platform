@@ -1,0 +1,62 @@
+# dependencies
+node_modules/
+vendor/
+
+# environment & secrets — NEVER commit
+.env
+.env.*
+*.env
+!.env.example
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*.pem
+id_rsa*
+id_ed25519*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.kube/
+kubeconfig*
+docker-credentials*
+
+# terraform / opentofu
+.terraform/
+.terraform.lock.hcl.bak
+plan.out
+*.plan
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# node
+dist/
+build/
+coverage/
+
+# editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# local runtime artifacts (never authoritative — spec §7)
+*.local.yaml
+*.local.yml
+runtime-state/
+backups/
+
+# logs
+*.log
+
+# public-record hygiene: files matching these patterns must never exist here
+*.token
+*.secret
+*_credentials*

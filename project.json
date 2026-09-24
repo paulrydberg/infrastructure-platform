@@ -1,0 +1,34 @@
+{
+  "project_id": "infrastructure-platform",
+  "name": "Infrastructure Platform",
+  "created": "2026-09-24",
+  "created_by": "Paul Rydberg (paulrydberg) via Telegram",
+  "description": "Reproducible cloud-native infrastructure, platform engineering, GitOps, observability, security, automation, and event-driven AI operations platform. Mac Mini first, AWS later. Dual objective: real engineering system + professional GitHub portfolio.",
+  "source_of_truth": {
+    "master_spec": "docs/00-project-origin/MASTER-SPEC-FULL.md",
+    "amendment_1": "docs/00-project-origin/AMENDMENT-1-GITHUB-PORTFOLIO-VERBATIM.md",
+    "amendment_2": "docs/00-project-origin/AMENDMENT-2-NAMING-STANDARD-VERBATIM.md",
+    "clarification_1": "docs/00-project-origin/CLARIFICATION-1-REPO-ARCHITECTURE-VERBATIM.md",
+    "operating_instructions": "docs/OPERATING-INSTRUCTIONS.md",
+    "prompt_log": "docs/PROMPTS.md",
+    "roadmap_status": "docs/ROADMAP-STATUS.md"
+  },
+  "naming_standard": {
+    "source": "Amendment 2 + ADR-0002",
+    "preferred_names": ["infrastructure-platform", "infrastructure-as-code", "container-platform", "deployment-platform", "observability-platform", "security-platform", "operations-automation", "incident-management", "ai-operations"],
+    "prohibited_public_names": ["homelab-platform", "homelab-infrastructure", "incident-lab", "ai-remediation-engine", "my-devops-project", "cloud-learning-project"],
+    "rule": "naming convention only — repos created exclusively on justified engineering boundaries via ADR"
+  },
+  "roadmap_baseline": "Verbatim prompts (master spec Phases 0-19 + Amendment 1)",
+  "github": {
+    "account": "paulrydberg",
+    "protocol": "ssh",
+    "verified": "2026-09-24"
+  },
+  "phase": 0,
+  "phase_name": "Discovery",
+  "status": "phase-0-complete-awaiting-phase-1-authorization",
+  "next_action": "Paul's decisions pending: (1) create repo paulrydberg/infrastructure-platform (name verified available), (2) visibility public-vs-private (public recommended), (3) Phase 1 implementation scope. Then ADR-0011 + git init + first push, then Phase 1 container foundation.",
+  "phase_0_report": "docs/01-discovery/discovery-report.md",
+  "transport_note": "Project memory is permanent; Telegram bot bindings are disposable transports per project-memory-architecture."
+}
