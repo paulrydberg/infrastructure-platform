@@ -108,19 +108,18 @@ jobs:
             || { echo "floating image reference found"; exit 1; }
           echo "chart/image consistency OK (pinned: $chart_tag)"
 
-      - name: kubernetes manifest server-schema validation (client-side)
+      - name: kubernetes manifest schema validation (kubeconform, pinned)
         run: |
-          helm template platform-demo platform/helm/platform-demo > /tmp/rendered.yaml
-          # dry-run validation via kubectl's client schema check without a cluster
-          # (kubectl with --dry-run=client validates structure; no cluster needed)
-          KUBECTL_VERSION=v1.31.2
-          curl -fsSL -o /tmp/kubectl \
-            "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
-          curl -fsSL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl.sha256" > /tmp/kubectl.sha256
-          echo "$(cat /tmp/kubectl.sha256)  /tmp/kubectl" | shasum -a 256 -c - --status \
-            || { echo "kubectl checksum mismatch"; exit 1; }
-          chmod +x /tmp/kubectl
-          /tmp/kubectl apply --dry-run=client --validate=strict -f /tmp/rendered.yaml
+          # cluster-less schema validation. kubectl --dry-run was rejected here:
+          # it still requires an API server for OpenAPI. kubeconform validates
+          # against upstream Kubernetes OpenAPI schemas offline.
+          KUBECONFORM_VERSION=v0.8.0
+          KUBECONFORM_SHA256=9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883
+          curl -fsSL -o /tmp/kubeconform.tgz \
+            "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          echo "${KUBECONFORM_SHA256}  /tmp/kubeconform.tgz" | sha256sum -c -
+          mkdir -p /tmp/kc && tar -xzf /tmp/kubeconform.tgz -C /tmp/kc
+          /tmp/kc/kubeconform -strict -summary /tmp/rendered.yaml
 
   build:
     runs-on: ubuntu-latest
