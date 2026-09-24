@@ -269,3 +269,19 @@ engineering foundation** — not Kubernetes. Deliverables:
   remediation via Git -> CI. Full report:
   docs/07-security/phase7b-report.md. STOPPED at 7B boundary; 7C (policy
   thresholds, registry allowlist, Kyverno audit) proposed, unauthorized.
+- **2026-09-24** — Phase 7B CLOSEOUT + 7C DESIGN PREPARATION (Paul-authorized
+  documentation-only pass). Corrections: 7B report reconciled in place —
+  CVE-2026-76642 re-verified against the final artifact as having NO listed
+  fix, so the no-upstream-fix group is THREE unique HIGH CVEs (53613/53614/
+  76642) and the fix-listed base-cycle group is FOUR (14456/45447/53612/
+  78408/78410 minus 76642 = 4 unique + their pairs); original narrative
+  preserved with an explicit reconciliation note. NEW:
+  docs/07-security/security-debt-register.md (dispositions: remediated /
+  base-cycle / upstream / accepted / false-positive-check / policy gaps)
+  and docs/07-security/phase7c-proposal.md + ADR-0004 (CI-first thresholds
+  with expiring exceptions proposed; registry-dependent controls deferred;
+  Kyverno audit-mode staged later; signing/provenance deferred; enforcement
+  deterministic, LLM=0). **Phase 7C is PROPOSED, NOT IMPLEMENTED** — no
+  thresholds flipped, no Kyverno, no registry, no signing. Verified 7B
+  state unchanged: CRITICAL 0, KSV-0118 0 on deployable manifests, gitleaks
+  0, image-policy 0.

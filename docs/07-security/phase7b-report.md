@@ -75,15 +75,23 @@ suspicion was rejected by evidence. Dispositions:
 - CVE-2026-14456 (libcrypto3+libssl3, QUIC DoS) — fixed 3.5.8-r0 →
   **REQUIRES_BASE_IMAGE_UPDATE** to alpine3.23 (deferred; tracked)
 - CVE-2026-45447 (openssl UAF PKCS7_verify) — fixed 3.5.7-r0 → same
-- CVE-2026-53612/53613/53614 (util-linux mount TOCTOU/SUID) — 53612 has
-  fix in 2.41.6-r0; 53613/53614 **no fix listed** →
+- CVE-2026-53612/53613/53614/76642 (util-linux mount TOCTOU/SUID/mount-helper)
+  — 53612 has fix in 2.41.6-r0; **53613/53614/76642 no fix listed** →
   REQUIRES_UPSTREAM_FIX. Applicability note: the image runs as non-root
   with no SUID usage by the app; mount helpers unreachable from the
   Python process. Exploitability: UNKNOWN, compensating control = non-root
   runtime.
-- CVE-2026-76642/78408/78410 (util-linux nsenter/bind-mount) — fixes
+- CVE-2026-78408/78410 (util-linux nsenter/bind-mount) — fixes
   available in 2.41.6-rx → REQUIRES_BASE_IMAGE_UPDATE (same alpine3.23
   path). Same non-root compensating context.
+
+> **Post-verification reconciliation (2026-09-24, gate + closeout):** the
+> original text above placed CVE-2026-76642 in the fix-available group.
+> Re-extraction from the final CI artifact (run 36033387702, commit
+> c7af53f) shows CVE-2026-76642 has **no fixed version listed** by the
+> scanner; the no-upstream-fix group is therefore **three** unique HIGH
+> CVEs (53613, 53614, 76642), not two. This note records the correction
+> without rewriting the original report narrative.
 
 The remaining 2 CRITICAL-count and 6 HIGH-count delta: the 7A HIGH count
 was against the old package set; the new base's newer packages carry
@@ -203,9 +211,9 @@ enforcement instead).
 
 ## 25. Remaining security debt
 
-1. Base cycle: alpine3.23 bump for CVE-2026-14456/45447/76642/78408/78410
-   (5 HIGHs with fixes) — next base review.
-2. util-linux CVEs without upstream fix (53613/53614) — watch upstream.
+1. Base cycle: alpine3.23 bump for CVE-2026-14456/45447/78408/78410
+   (4 HIGHs with fixes; see §6 reconciliation for 76642) — next base review.
+2. util-linux CVEs without upstream fix (53613/53614/76642) — watch upstream.
 3. pip CVEs — resolved when upstream python images refresh pip.
 4. Config LOWs (caps-drop, namespace, quota) — 7C policy candidates.
 5. Registry-backed digest identity — future phase decision.

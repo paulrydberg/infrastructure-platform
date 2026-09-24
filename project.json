@@ -44,8 +44,8 @@
   },
   "phase": 6,
   "phase_name": "Observability",
-  "status": "phase-7b-security-triage-remediation-complete-awaiting-7c-authorization",
-  "next_action": "Phase 7B complete: CVE-2026-31789 remediated via base bump (CRITICAL 2->0, rescan-verified), KSV-0118 root-caused + remediated via pod-level securityContext, all findings dispositioned, debt tracked. Awaiting 7C authorization: severity thresholds, blocking policy, registry allowlist, Kyverno audit mode.",
+  "status": "phase-7b-closed-and-verified-phase-7c-proposed-not-implemented",
+  "next_action": "7B closed: CVE-2026-31789 remediated (CRITICAL 0), KSV-0118 remediated (0 HIGH on deployable manifests), debt register live (4 fix-listed HIGH CVEs -> next base cycle; 3 no-fix HIGH CVEs -> upstream). 7C PROPOSED ONLY (ADR-0004 + phase7c-proposal.md): CI-first severity thresholds w/ expiring exceptions; registry/Kyverno/signing deferred. Awaiting Paul authorization.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {
