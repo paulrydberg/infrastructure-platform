@@ -214,3 +214,20 @@ engineering foundation** — not Kubernetes. Deliverables:
   gitleaks + image-policy codification; Kyverno deferred to separate gate).
   Tier B NOT cleared; AWS deferred by dependency order. Awaiting explicit
   Phase 7 authorization. STOPPED at Phase 6 boundary.
+- **2026-09-24** — Phase 7A CI security evidence EXECUTED (Paul-authorized;
+  CI-only staging per roadmap memo). Controls: Trivy image+config scans
+  (action v0.36.0 @ SHA ed142fd0, scanner v0.70.0 — supply-chain incident
+  GHSA-69fq-xp46-6x23/CVE-2026-33634 documented and bypassed: malicious
+  v0.69.4 verified absent upstream); gitleaks v8.30.1 binary + checksum
+  551f6fc8... (gitleaks-action v3 REJECTED: commercial EULA bundle;
+  existing grep gate retained as the deterministic blocker, gitleaks adds
+  entropy/history coverage with --redact); SPDX SBOM generated FROM the
+  built platform-demo:0.1.0 image with digest metadata; deterministic
+  image-reference policy step (no :latest, no untagged refs — fails CI on
+  objective violations only). Evidence mode throughout: exit-code 0, 30-day
+  artifact retention. New security job runs on GitHub-hosted runners AFTER
+  build — zero Mac Mini footprint, zero cluster changes. Security baseline
+  doc: docs/07-security/security-baseline.md (DETECTED/BASELINED/WARNED/
+  BLOCKED/REMEDIATED/VERIFIED distinctions established; nothing BLOCKED).
+  STOPPED at 7A boundary. 7B (policy from baseline -> enforcement) requires
+  separate authorization.

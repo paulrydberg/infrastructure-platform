@@ -50,6 +50,7 @@ baselines are measured and documented in
 | Phase 3 — Helm packaging | ✅ Implemented — lint/render/install/upgrade/rollback/reconstruction validated |
 | Phase 4 — CI/CD (GitHub Actions) | ✅ Implemented — deterministic validate+build pipeline, failure modes demonstrated |
 | Phase 5A — GitOps (Argo CD, minimal footprint) | ✅ Implemented — control loop, drift self-heal, failure/recovery demonstrated; measured ~209 MB |
+| Phase 7A — Security (CI evidence) | 🔎 Trivy + gitleaks + SPDX SBOM in CI, evidence mode; policy enforcement is a future gate |
 | Phase 6 — Observability | 📊 Analysis + Tier-A metrics-server experiment complete — functionally validated, closed on a host swap-pressure gate (rolled back); not a persistent capability |
 | Security (Trivy/Kyverno/SBOM) | 📋 Planned (Phase 7) |
 | AWS (Terraform/OpenTofu, VPC/IAM/ECR/EKS) | 📋 Planned (Phase 8+) |

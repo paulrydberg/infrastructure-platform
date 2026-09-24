@@ -44,8 +44,8 @@
   },
   "phase": 6,
   "phase_name": "Observability",
-  "status": "phase-6-closed-roadmap-memo-delivered-awaiting-phase7-authorization",
-  "next_action": "Phase 6 closed: resource-gate principle codified, completion record written, roadmap decision memo recommends Phase 7 Security CI-first (Trivy+SBOM+gitleaks+image policy; Kyverno separate gate). Tier B not cleared. Awaiting explicit Phase 7 authorization from Paul.",
+  "status": "phase-7a-cicd-security-evidence-complete-awaiting-7b-authorization",
+  "next_action": "Stage 7A complete: Trivy (pinned, incident-vetted) + gitleaks (checksum-pinned binary) + SPDX SBOM + image-reference policy running in CI evidence mode on GitHub-hosted runners. Baseline established, nothing BLOCKED. Awaiting 7B authorization to define policy from baseline and decide enforcement.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {
