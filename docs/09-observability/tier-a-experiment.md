@@ -177,3 +177,20 @@ swap baseline (and ideally a host whose swap pressure is understood).
   driver first (read-only, protected fleet remains out of scope), (c) defer
   Tier B/C (would add 10–100× more memory pressure on the same host),
   (d) VM resize decision remains available but unchanged.
+
+---
+
+## Post-experiment addendum (2026-09-24, same day — appended, not rewritten)
+
+The original classification above stands verbatim. Subsequent read-only
+investigation (`swap-driver-characterization.md`) established that the
+swap gate's *indicator* was too coarse: host pressure was NORMAL, swap-in
+activity was zero at rest, and swap declined when idle — the elevated
+swap-used bytes were cold-page residency, not active pressure. The gate
+interpretation was improved as a result (`resource-gate-principles.md`)
+and will be applied to FUTURE experiments. This experiment was not
+retroactively reclassified, and metrics-server remains experimentally
+validated, not retained.
+
+Chain: experiment → gate fired → conservative rollback → characterization
+→ gate interpretation improved.

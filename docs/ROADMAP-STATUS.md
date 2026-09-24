@@ -198,3 +198,19 @@ engineering foundation** — not Kubernetes. Deliverables:
   swap-used thresholds conflate residency with pressure; future gates should
   use swap-activity rate + pressure level. Tier-B not cleared by this evidence.
   Report: docs/09-observability/swap-driver-characterization.md. STOPPED.
+- **2026-09-24** — Phase 6 CLOSED (Paul-accepted). Resource-gating lesson
+  formalized as a platform principle (docs/09-observability/resource-gate-principles.md):
+  allocation ≠ utilization ≠ swap residency ≠ swap activity ≠ pressure ≠
+  degradation; raw swap-used insufficient alone on macOS/Docker Desktop;
+  future gates combine pressure level + swap activity + OOM/restarts +
+  MemoryPressure + API latency + load + workload degradation. Tier-A
+  classification preserved verbatim with an appended (not rewritten)
+  addendum pointing to the characterization. Phase 6 completion record
+  created (docs/09-observability/phase6-completion-record.md) tying the
+  full chain: capacity analysis -> decision gate -> experiment -> swap
+  event -> rollback -> characterization -> gate refinement -> decision.
+  Roadmap decision memo produced (docs/roadmap-decision-memo.md):
+  RECOMMENDATION = Phase 7 Security, CI-first staging (Trivy + SBOM +
+  gitleaks + image-policy codification; Kyverno deferred to separate gate).
+  Tier B NOT cleared; AWS deferred by dependency order. Awaiting explicit
+  Phase 7 authorization. STOPPED at Phase 6 boundary.

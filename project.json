@@ -44,8 +44,8 @@
   },
   "phase": 6,
   "phase_name": "Observability",
-  "status": "phase6-tier-a-closed-swap-characterized-awaiting-next-decision",
-  "next_action": "Tier-A closed (swap gate, causality uncertain) + read-only swap-driver characterization complete: swap is cold-page residency, host pressure NORMAL, driver outside monitored set. Options for Paul: re-run Tier A with activity-based gate / extend host telemetry / proceed elsewhere / VM resize. Awaiting authorization.",
+  "status": "phase-6-closed-roadmap-memo-delivered-awaiting-phase7-authorization",
+  "next_action": "Phase 6 closed: resource-gate principle codified, completion record written, roadmap decision memo recommends Phase 7 Security CI-first (Trivy+SBOM+gitleaks+image policy; Kyverno separate gate). Tier B not cleared. Awaiting explicit Phase 7 authorization from Paul.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {
