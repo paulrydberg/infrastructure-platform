@@ -321,3 +321,23 @@ engineering foundation** — not Kubernetes. Deliverables:
   thresholds, Kyverno/registry boundary tables: all documented in
   phase7c-policy-model.md; ADR-0005 refined. STILL NOT IMPLEMENTED —
   CI untouched, enforcement unauthorized.
+- **2026-09-24** — Phase 7C SHADOW EVALUATOR IMPLEMENTED (observational
+  only; CI green). tools/policy/: shadow_evaluator.py (stdlib-only,
+  deterministic, LLM=0; JSON-only policy input; identity=PkgName|CVE;
+  R1 CRIT+fix WOULD_FAIL, R2 NEW/PERSISTENT/RESOLVED with severity/fix
+  transitions, R3 visibility incl. expired exceptions + missing history,
+  R4 rendered-platform-demo-only config observation), 19 offline unit +
+  historical-regression tests (7A fixture -> R1 WOULD_FAIL; current ->
+  PASS), shadow exception ledger (empty; 90d expiry = proposed default
+  under test). CI: 4 additive steps (JSON scan same pins, unit tests,
+  previous-run fetch w/ continue-on-error, shadow-policy-verdict artifact
+  90d). **CI failure #1 recorded + fixed** (run 36039544280: eager open
+  of absent previous file -> FileNotFoundError; fix 07f923f passes the
+  path and resolves file-missing to the first-run UNKNOWN branch;
+  failure documented in tools/policy/README.md). **Cycle 1 observed
+  (real artifact, run 36040098028 @ 07f923f): verdict UNKNOWN — R1 PASS,
+  R2 UNKNOWN (first run, no previous artifact — expected per design),
+  R3 WARN (missing-history visibility record), R4 PASS.** Cycle 2
+  (persistence measurement) PENDING the next natural CI run. Enforcement
+  NOT enabled; scanner exit behavior unchanged (ci.yml diff = insertions
+  only, zero removed lines).

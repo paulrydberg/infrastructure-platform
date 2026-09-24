@@ -44,8 +44,8 @@
   },
   "phase": 6,
   "phase_name": "Observability",
-  "status": "phase-7c-policy-modeled-and-simulated-awaiting-shadow-mode-authorization",
-  "next_action": "7C policy fully modeled (4 families x 3 historical states; ADR-0005 refined): R1/R2/R4 stand, D-layer expiring exceptions designed (90d proposal). NOT implemented, CI evidence-mode untouched. Next gate: shadow-mode implementation authorization.",
+  "status": "phase-7c-shadow-evaluator-implemented-cycle-1-observed-cycle-2-pending",
+  "next_action": "Shadow evaluator live in CI (observational). Cycle 1 @ 07f923f: UNKNOWN (first run, no history - expected). Cycle 2 persistence measurement pending next natural run. Enforcement decision = separate future gate after reviewing >=2 cycles.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {
