@@ -237,3 +237,14 @@ engineering foundation** — not Kubernetes. Deliverables:
   not found; run failed). Correction: scanner steps re-homed INTO the build
   job right after image build/tests. Lesson: scan the artifact in the job
   that builds it, or promote the image via a registry.
+  7A baseline established (CI run, all evidence mode): Trivy image scan of
+  platform-demo:0.1.0 (alpine 3.20.6) = 52 CVEs (19 LOW/15 MED/16 HIGH/
+  2 CRIT; the 2 CRITs are CVE-2026-31789 openssl on libcrypto3+libssl3,
+  fixed in 3.3.7-r0 -> base-bump remediation path, nothing BLOCKED);
+  Trivy config scan = 460 checks, 29 failures (27 LOW/4 MED/3 HIGH; all 3
+  HIGH are KSV-0118 default-security-context, incl. one likely rule-context
+  false positive on the non-root chart -> 7B triage); gitleaks full-history
+  = 0 findings (VERIFIED clean); SPDX SBOM 76.9 KB generated from the built
+  image (digest field empty: local CI build has no registry digest ->
+  documented 7B gap); image-reference policy 0 violations. Evidence
+  artifact (30-day retention) published with the run.

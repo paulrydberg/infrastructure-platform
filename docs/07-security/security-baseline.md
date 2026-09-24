@@ -67,11 +67,11 @@ rescan). A DETECTED finding is NOT a remediated one.
 
 | Scan | Target | Result | Class |
 |---|---|---|---|
-| Trivy image | platform-demo:0.1.0 (python:3.12-alpine3.20 base) | recorded in trivy-report.txt artifact | BASELINED |
-| Trivy config | platform/ manifests | recorded in trivy-config-report.txt | BASELINED |
-| Gitleaks | full git history | recorded in gitleaks-report.json | BASELINED |
+| Trivy image | platform-demo:0.1.0 (alpine 3.20.6 base) | **52 CVEs** (LOW 19 / MED 15 / HIGH 16 / CRIT 2 — 2x CVE-2026-31789 openssl heap overflow, fix available 3.3.7-r0; base bump required, no image rebuild blocked) | DETECTED -> BASELINED |
+| Trivy config | platform/ manifests | 114+98+125+123 tests; **29 failures total (27 LOW, 4 MEDIUM, 3 HIGH)** — all 3 HIGH are KSV-0118 'default security context allows root' incl. k3s compose + platform-demo chart (chart actually sets non-root 65534 — rule needs triage: possible false positive vs default-namespace render) | DETECTED -> BASELINED (triage in 7B) |
+| Gitleaks | full git history | **0 findings** (empty report `[]`) — repo history clean | VERIFIED |
 | Image policy | platform/ + applications/ | 0 violations (pinned tags, no latest) | VERIFIED (deterministic) |
-| SBOM | platform-demo:0.1.0 | SPDX JSON + metadata artifact | BASELINED |
+| SBOM | platform-demo:0.1.0 | SPDX JSON (76.9 KB) + metadata; digest field empty (`<none>` — locally-built image has no registry digest; digest awareness requires a registry push, out of 7A scope) | BASELINED (digest gap noted) |
 
 ## 6. SBOM provenance — what is and is not claimed
 
@@ -131,6 +131,41 @@ platform-demo:0.1.0; run failed). Correction: scanner steps re-homed into
 the build job immediately after the image build/tests — scanners run
 against the actual artifact on the same runner. Lesson: scan the artifact
 in the job that builds it, or promote via a registry first.
+
+
+## 9c. Actual baseline findings (first evidence run, 2026-09-24)
+
+**Trivy image scan — platform-demo:0.1.0 (alpine 3.20.6):**
+- **52 CVEs total**: LOW 19, MEDIUM 15, HIGH 16, CRITICAL 2
+- The 2 CRITICALs are the same OpenSSL vulnerability (CVE-2026-31789,
+  heap buffer overflow from large X.509 certificates on 32-bit systems)
+  reported once for libcrypto3 and once for libssl3, both fixed in
+  3.3.7-r0 — remediation is a base-image bump of alpine 3.20.x, which is
+  a deterministic rebuild (tracked for 7B triage; nothing is BLOCKED)
+- python-pip findings: 6 (5 MEDIUM, 1 LOW), several with fixes available
+  in pip 25.3/26.x — same base-bump remediation path
+
+**Trivy config scan — platform/ manifests:**
+- 460 checks across 4 files: 29 failures (27 LOW, 4 MEDIUM, 3 HIGH)
+- All 3 HIGH are KSV-0118 ("default security context allows root"):
+  k3s compose.yaml, platform-demo chart render, and the metrics-server
+  reference in the experiment documentation. Triage note for 7B: the
+  platform-demo chart sets runAsUser 65534/non-root/read-only rootfs, so
+  the rule firing on it needs verification against the actual rendered
+  output — possible rule-context mismatch (false positive) to confirm.
+
+**Gitleaks — full git history:** **0 findings** (empty `[]` report).
+Combined with the existing grep gate, the repository's secret hygiene is
+VERIFIED clean at 7A.
+
+**SBOM:** SPDX JSON 76.9 KB for platform-demo:0.1.0. Honest gap: the
+`digest` metadata field is empty (`<none>`) — a locally-built image inside
+CI has no registry digest; digest-level identity requires a registry push
+(explicitly out of 7A scope). Source→build→SBOM chain is real; digest
+anchoring is a documented gap for 7B.
+
+**Image-reference policy:** 0 violations — no `:latest`, no untagged
+references across platform/ and applications/.
 
 ## 10. Resource impact
 
