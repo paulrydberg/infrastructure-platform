@@ -22,7 +22,7 @@ and "Not applicable yet".
 | Helm packaging | platform-demo chart: lint/template/install/upgrade/rollback/reconstruction all validated — Phase 3 evidence | **Tested** | **yes** | chart repo/OCI publication |
 | CI/CD (GitHub Actions) | 2-job pipeline (validate→build) w/ SHA-pinned actions, checksum-gated tools, chart↔compose consistency, kubeconform; controlled failure modes demonstrated — Phase 4 evidence | **Tested** | **yes — public runs** | registry publish job |
 | GitOps (Argo CD) | v2.13.3 minimal footprint (~209 MB measured); control loop, drift self-heal, failure/recovery, staged teardown + permanent residency — Phase 5A evidence | **Tested** | **yes** | multi-app scale, SSO/RBAC hardening |
-| Observability stack | capacity analysis complete + decision gate complete (Tier A GO recommendation, docs/09-observability/); metrics-server NOT installed; implementation unauthorized | Analysis only | yes (analysis honesty) | separate authorization for Tier-A execution |
+| Observability stack | capacity analysis + decision gate + Tier-A experiment complete; metrics-server functionally demonstrated but experiment CLOSED on host-swap gate (causality uncertain, rolled back) | Experimental (validated, not retained) | yes (evidence-linked) | Phase 6 re-run/defer decision |
 | Security (Trivy/Kyverno/SBOM) | none | Not implemented | no | Phase 7 |
 | Terraform/OpenTofu + AWS | no cloud account exists | Not implemented | no | Phase 8 + account creation |
 | Dependency automation (Renovate/WUD) | none | Not implemented | no | Phases 1/10 |

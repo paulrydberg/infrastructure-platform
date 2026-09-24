@@ -15,9 +15,26 @@
   },
   "naming_standard": {
     "source": "Amendment 2 + ADR-0002",
-    "preferred_names": ["infrastructure-platform", "infrastructure-as-code", "container-platform", "deployment-platform", "observability-platform", "security-platform", "operations-automation", "incident-management", "ai-operations"],
-    "prohibited_public_names": ["homelab-platform", "homelab-infrastructure", "incident-lab", "ai-remediation-engine", "my-devops-project", "cloud-learning-project"],
-    "rule": "naming convention only — repos created exclusively on justified engineering boundaries via ADR"
+    "preferred_names": [
+      "infrastructure-platform",
+      "infrastructure-as-code",
+      "container-platform",
+      "deployment-platform",
+      "observability-platform",
+      "security-platform",
+      "operations-automation",
+      "incident-management",
+      "ai-operations"
+    ],
+    "prohibited_public_names": [
+      "homelab-platform",
+      "homelab-infrastructure",
+      "incident-lab",
+      "ai-remediation-engine",
+      "my-devops-project",
+      "cloud-learning-project"
+    ],
+    "rule": "naming convention only \u2014 repos created exclusively on justified engineering boundaries via ADR"
   },
   "roadmap_baseline": "Verbatim prompts (master spec Phases 0-19 + Amendment 1)",
   "github": {
@@ -27,8 +44,8 @@
   },
   "phase": 6,
   "phase_name": "Observability",
-  "status": "capacity-analysis-complete-awaiting-architecture-decision",
-  "next_action": "READ-ONLY capacity analysis complete (nothing installed; Argo preserved). Decision matrix: Tier A metrics-only FITS envelope; Tier B tight; Tier B+ needs VM resize or staging; Tier C not justified. Awaiting Paul's architecture choice: Tier A experiment / Tier B staged windows / VM resize / external observability / defer.",
+  "status": "tier-a-experiment-complete-closed-by-swap-gate-awaiting-phase6-decision",
+  "next_action": "Tier-A metrics-server experiment complete: functional validation successful (kubectl top works, 16-20 Mi measured) but host swap gate triggered (625->1260 MB), causality uncertain, closed via documented rollback per conservative gate reading. metrics-server is experimentally validated, NOT an implemented capability. Awaiting Paul: re-run with re-validated baseline / host swap characterization / defer / VM-resize.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {

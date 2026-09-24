@@ -169,3 +169,20 @@ engineering foundation** — not Kubernetes. Deliverables:
   capability matrix synced to actual phase progress. Resource note from Paul:
   Ubuntu laptop (Tailscale SSH) may be evaluated as future memory resource —
   measure-only first, no migration without separate authorization.
+- **2026-09-24** — Phase 6 Tier-A metrics-server v0.7.2 EXECUTED (Paul-authorized).
+  Pinned manifest under Git (upstream SHA-256 verified, image pinned, one delta:
+  resource limits). Functional validation successful: Ready in ~31 s, kubectl
+  top nodes/pods working, measured 16-20 Mi (vs 60-100 MB estimated). 12-sample
+  55-min window: k3s 1.005-1.058 GiB (cap 1.5), API within baseline, load within
+  baseline, Argo Synced Healthy, platform-demo healthy, protected fleet
+  0 restarts/OOMs. SWAP GATE TRIGGERED: 625.75 -> 1260 MB during window, never
+  reverted. Attribution: k3s RSS shrank at the event, Pearson r(k3s,swap)=0.131
+  over 27 samples, no k8s/docker OOM events, node MemoryPressure=False,
+  metrics-server constant — evidence does not support metrics-server as cause
+  but causality unproven. Classified CORRELATED_BUT_CAUSALITY_UNCERTAIN;
+  closed conservatively via documented rollback (control comparison: swap did
+  not revert after removal, did not keep growing either). Classification:
+  FUNCTIONAL VALIDATION SUCCESSFUL / SWAP GATE TRIGGERED / CAUSALITY UNCERTAIN.
+  metrics-server = experimentally validated, NOT implemented. Full report:
+  docs/09-observability/tier-a-experiment.md; raw log:
+  docs/09-observability/tier-a-observation.log. STOPPED at Phase 6 boundary.
