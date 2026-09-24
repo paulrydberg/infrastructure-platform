@@ -6,7 +6,10 @@
 # recover. It demonstrates deterministic, reproducible deployment practice:
 # pinned base image, non-root user, health check, explicit resource limits,
 # no secrets, no volumes required.
-FROM python:3.12-alpine3.20
+# alpine3.22: smallest supported base resolving CVE-2026-31789
+# (openssl >= 3.3.7-r0; measured 3.5.6-r0 in this image). See
+# docs/07-security/phase7b-triage.md for the candidate analysis.
+FROM python:3.12-alpine3.22
 
 LABEL org.opencontainers.image.title="infrastructure-platform-demo"
 LABEL org.opencontainers.image.description="Phase 1 lifecycle validation service"

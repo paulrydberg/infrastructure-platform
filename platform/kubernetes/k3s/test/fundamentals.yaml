@@ -35,6 +35,11 @@ spec:
       labels:
         app: demo
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: demo
           image: traefik/whoami:v1.10
