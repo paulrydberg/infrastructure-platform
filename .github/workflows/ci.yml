@@ -250,11 +250,76 @@ jobs:
           /tmp/gl/gitleaks detect --source . --redact --report-format json --report-path gitleaks-report.json || true
           echo "gitleaks scan complete (evidence mode)"
 
+      # ---- Phase 7C: shadow-mode policy evaluation (observational ONLY) ----
+      # JSON = authoritative machine input for policy decisions; the .txt
+      # tables are presentation only (merged-cell counting hazard, see
+      # docs/07-security/phase7c-policy-model.md). This scan is ADDITIVE:
+      # same scanner/pin/params as the table scan, format json, exit-code 0.
+      # It changes no existing step's behavior.
+      - name: trivy vulnerability scan (json, machine-readable evidence)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.70.0
+          scan-type: image
+          image-ref: platform-demo:0.1.0
+          format: json
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          output: trivy-report.json
+
+      - name: run shadow policy unit tests (must pass; observational layer)
+        run: python3 tools/policy/test_shadow_evaluator.py
+
+      - name: fetch previous successful run's scan JSON (R2 persistence input)
+        continue-on-error: true
+        run: |
+          # Deterministic previous-run source: the last successful build run
+          # on this branch that produced security-evidence. First run (or
+          # retention gap) -> no file -> evaluator records MISSING HISTORY
+          # as UNKNOWN for R2 (never "no vulnerabilities").
+          PREV_RUN_ID=$(gh run list --branch "$GITHUB_REF_NAME" \
+            --status success --limit 10 --json databaseId,headSha \
+            --jq '[.[] | select(.headSha != env.GITHUB_SHA)][0].databaseId // ""')
+          if [ -n "$PREV_RUN_ID" ]; then
+            gh run download "$PREV_RUN_ID" -n security-evidence -D /tmp/prev-evidence || true
+            [ -f /tmp/prev-evidence/trivy-report.json ] && \
+              cp /tmp/prev-evidence/trivy-report.json /tmp/previous-trivy-report.json || true
+          fi
+          [ -f /tmp/previous-trivy-report.json ] && echo "previous scan: run $PREV_RUN_ID" \
+            || echo "previous scan: UNAVAILABLE (R2=UNKNOWN this cycle)"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: shadow policy evaluation (R1/R2/R3/R4 — never blocking)
+        run: |
+          helm template platform-demo platform/helm/platform-demo > /tmp/rendered-shadow.yaml
+          python3 tools/policy/shadow_evaluator.py \
+            --current trivy-report.json \
+            --previous /tmp/previous-trivy-report.json \
+            --rendered /tmp/rendered-shadow.yaml \
+            --exceptions tools/policy/security-exceptions.json \
+            --commit "$GITHUB_SHA" \
+            --out shadow-verdict.json
+          # Observational guarantee: a WOULD_FAIL verdict is still a
+          # successful run. The verdict is recorded, never enforced.
+          cat shadow-verdict.json | python3 -c \
+            "import json,sys; d=json.load(sys.stdin); print('shadow verdict:', d['verdict'], '| summary:', d['summary'])"
+
+      - name: upload shadow policy artifact
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
+        with:
+          name: shadow-policy-verdict
+          path: shadow-verdict.json
+          retention-days: 90
+
       - name: upload security evidence artifacts
         uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: security-evidence
           path: |
+            trivy-report.json
             trivy-report.txt
             trivy-config-report.txt
             sbom-platform-demo.spdx.json
