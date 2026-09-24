@@ -1,0 +1,33 @@
+# Tier-A metrics-server observation log — k3s 1.5 GiB envelope experiment (2026-09-24)
+# Fields: time k3s-RSS | VM-available | swap | host-load5 | API-readyz-latency |
+#         argocd-app-status | metrics-server-phase, platform-demo-phase | protected-fleet anomalies
+# Node name omitted (single generic container node); no IPs/credentials recorded.
+# Post-observation control lines at end: metrics-server removed, swap did NOT revert.
+06:19 sample: k3s=1016MiB | VMavail=1946MB | swap=625.75MB | load5=4.28 | API=0.39s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+06:25 sample: k3s=1.021GiB | VMavail=1936MB | swap=625.75MB | load5=4.26 | API=0.38s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+06:28 sample: k3s=1.005GiB | VMavail=1921MB | swap=625.75MB | load5=3.97 | API=0.43s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+06:30 sample: k3s=1.01GiB | VMavail=1858MB | swap=625.75MB | load5=3.79 | API=0.40s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+06:35 sample: k3s=1.02GiB | VMavail=1891MB | swap=625.75MB | load5=3.75 | API=0.43s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+06:40 sample: k3s=1.008GiB | VMavail=1903MB | swap=625.75MB | load5=3.81 | API=0.41s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+06:45 sample: k3s=1.03GiB | VMavail=1970MB | swap=628.25MB | load5=4.35 | API=0.40s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+06:50 sample: k3s=1.056GiB | VMavail=1943MB | swap=660.50MB | load5=3.72 | API=0.37s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+06:55 sample: k3s=1.05GiB | VMavail=1827MB | swap=716.00MB | load5=4.01 | API=0.42s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+07:00 sample: k3s=1.05GiB | VMavail=1854MB | swap=716.00MB | load5=4.25 | API=0.45s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+07:06 sample: k3s=1.058GiB | VMavail=1838MB | swap=716.00MB | load5=3.69 | API=0.40s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+07:11 sample: k3s=1.01GiB | VMavail=1480MB | swap=1239.25MB | load5=3.81 | API=0.47s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+07:16 sample: k3s=1.021GiB | VMavail=1547MB | swap=1239.25MB | load5=3.74 | API=0.38s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+07:18 sample: k3s=1.022GiB | VMavail=1566MB | swap=1239.25MB | load5=3.60 | API=0.41s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+07:28 sample: k3s=1.021GiB | VMavail=1627MB | swap=1175.25MB | load5=3.66 | API=0.43s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+07:35 sample: k3s=1.029GiB | VMavail=1652MB | swap=1175.25MB | load5=3.84 | API=0.39s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+07:44 sample: k3s=1.031GiB | VMavail=1698MB | swap=1175.25MB | load5=3.46 | API=0.47s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+07:52 sample: k3s=1.034GiB | VMavail=1719MB | swap=1175.25MB | load5=3.25 | API=0.53s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+08:01 sample: k3s=1.025GiB | VMavail=1821MB | swap=1175.25MB | load5=3.36 | API=0.44s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+08:08 sample: k3s=1.021GiB | VMavail=1877MB | swap=1143.25MB | load5=3.43 | API=0.40s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+08:18 sample: k3s=1.027GiB | VMavail=1830MB | swap=1143.25MB | load5=3.43 | API=0.43s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+08:25 sample: k3s=1.038GiB | VMavail=1866MB | swap=1143.25MB | load5=4.35 | API=0.40s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+08:35 sample: k3s=1.037GiB | VMavail=1907MB | swap=1143.25MB | load5=3.79 | API=0.50s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+08:42 sample: k3s=1.039GiB | VMavail=1988MB | swap=1143.25MB | load5=4.68 | API=0.48s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+08:51 sample: k3s=1.037GiB | VMavail=1833MB | swap=1260.25MB | load5=3.92 | API=0.46s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+09:01 sample: k3s=1.041GiB | VMavail=1882MB | swap=1196.25MB | load5=3.76 | API=0.43s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+09:10 sample: k3s=1.042GiB | VMavail=1937MB | swap=1196.25MB | load5=3.68 | API=0.39s | argo=Synced Healthy | ms=Running demo=Running | protected_anomalies=0
+=== CONTROL: metrics-server removed 10:55 | swap=1345.50MB stable over 4 samples | k3s 1.004-1.008 GiB | ch 1.853-1.953 GiB | argo healthy
