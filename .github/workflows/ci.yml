@@ -67,8 +67,14 @@ jobs:
             "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz"
           # verify against the official checksum published by the Helm project
           # for this exact pinned version (version is the pin; checksum is the
-          # integrity gate; both fetched over TLS from get.helm.sh)
-          curl -fsSL "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum" | shasum -a 256 -c -
+          # integrity gate; both fetched over TLS from get.helm.sh).
+          # The .sha256sum file names the original tarball, so compare digests
+          # directly rather than by filename.
+          expected=$(curl -fsSL "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum" | awk '{print $1}')
+          actual=$(sha256sum /tmp/helm.tgz | awk '{print $1}')
+          echo "expected: $expected"
+          echo "actual:   $actual"
+          [ -n "$expected" ] && [ "$expected" = "$actual" ] || { echo "CHECKSUM MISMATCH"; exit 1; }
           mkdir -p /tmp/helm && tar -xzf /tmp/helm.tgz -C /tmp/helm
           sudo mv /tmp/helm/linux-amd64/helm /usr/local/bin/helm
           helm version
