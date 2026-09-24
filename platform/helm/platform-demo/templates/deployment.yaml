@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "platform-demo.fullname" . }}
+  name: {{ include "platform-demo.nonexistent-helper" . }}
   labels:
     {{- include "platform-demo.labels" . | nindent 4 }}
 spec:
