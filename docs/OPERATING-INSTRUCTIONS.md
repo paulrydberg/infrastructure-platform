@@ -62,11 +62,11 @@
 - Production services (Hermes runtime, existing containers) are never touched
   by this project without explicit, separate authorization.
 
-## 6. Project Identity (project-memory-architecture)
+## 6. Project Identity
 
-- `project_id = infrastructure-platform` is permanent. Telegram bots are
-  disposable transports. Project memory survives transport changes.
-- GitHub account: `paulrydberg` (SSH). Never use bot tokens/leases as
+- `project_id = infrastructure-platform` is permanent. Project identity is
+  the repository, never any chat/ops session or token.
+- GitHub account: `paulrydberg` (SSH). Never use credentials/tokens as
   project identity.
 
 ## 7. Secrets Discipline (master spec §26; Amendment 1 §6)

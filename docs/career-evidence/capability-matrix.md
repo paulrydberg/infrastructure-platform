@@ -1,27 +1,28 @@
 # Capability Matrix — infrastructure-platform
 
-**Status:** Honest baseline (2026-09-24, post-Phase 0; re-issued per phase
-and eventually per-release)
+**Status:** Honest, re-issued through Phase 6 decision gate (2026-09-24)
 
 Maturity labels (Amendment 1 §24): Design / Prototype / Experimental /
 Functional / Tested / Production-like / Operational / Continuously Validated.
+Additional states used: "Analysis only" (work performed, nothing deployed)
+and "Not applicable yet".
 
 | Capability | Evidence (current) | Maturity | Portfolio-visible? | Remaining gap |
 |-----------|--------------------|----------|--------------------|---------------|
 | Linux/macOS system administration | operator environment; Phase 0 discovery | Functional (environment-level) | no — not yet a project artifact | evidence through bootstrap + ops docs |
 | Docker operations | 20 production containers on host (other projects) | Functional (environment-level) | no | this project's own versioned workloads |
-| Documentation engineering | 30-file doc set, ADRs, verbatim records | Functional | yes (once repo exists) | CI link validation (Phase 4) |
+| Documentation engineering | 30+ file doc set, ADRs, verbatim records, CI link validation | Functional | **yes — repo live** | — |
 | Repository/Git strategy | Phase 0 analysis, ADR-0001/0002/0003, source-of-truth matrix | Functional | **yes — repo live, protected** | release cadence as work continues |
-| Container build/orchestration | platform-demo 0.1.0 (pinned base, non-root, healthcheck, resource limits, compose) | **Tested** | **yes — v0.1.0 release** | registry publication (Phase 4) |
-| CI validation gates | ci.yml: secret scan, syntax, compose config, doc links — green run on PR #1 | **Tested** | **yes — Actions runs public** | build+artifact jobs (Phase 4) |
-| Bootstrap validation | bootstrap.sh, 10 checks, idempotent ×2 verified | **Tested** | **yes** | installation automation (Phase 2) |
+| Container build/orchestration | platform-demo 0.1.0 (pinned base, non-root, healthcheck, resource limits, compose); CI-built | **Tested** | **yes — v0.1.0 release** | registry publication (later phase) |
+| CI validation gates | ci.yml: secret scan, syntax, compose config, doc links — green run on PR #1 (initial gates) | **Tested** (superseded by full CI/CD row below) | **yes — Actions runs public** | superseded — see CI/CD row |
+| Bootstrap validation | bootstrap.sh, 10 checks, idempotent ×2 verified | **Tested** | **yes** | full-environment install automation (Phases 17–18) |
 | Release management | v0.1.0 tag + GitHub release with honest notes | Functional | **yes** | cadence per phase |
-| Reconstruction (app-level) | destroy → rebuild from source demonstrated (Level 1) | **Tested** | **yes — PR #1 evidence** | cluster-level (Phase 2+) |
+| Reconstruction (app-level) | destroy → rebuild from source demonstrated (Level 1) | **Tested** | **yes — PR #1 evidence** | superseded by platform-level row below |
 | Kubernetes (k3s, single node, 1.5 GiB envelope) | k3s v1.31.2 resident; fundamentals (namespace/quota/probes/services), drift self-heal, Level 2 reconstruction (down -v → Ready ~8 s) — Phase 2 evidence | **Tested** | **yes — repo + Actions** | multi-node/upgrade scenarios |
 | Helm packaging | platform-demo chart: lint/template/install/upgrade/rollback/reconstruction all validated — Phase 3 evidence | **Tested** | **yes** | chart repo/OCI publication |
 | CI/CD (GitHub Actions) | 2-job pipeline (validate→build) w/ SHA-pinned actions, checksum-gated tools, chart↔compose consistency, kubeconform; controlled failure modes demonstrated — Phase 4 evidence | **Tested** | **yes — public runs** | registry publish job |
 | GitOps (Argo CD) | v2.13.3 minimal footprint (~209 MB measured); control loop, drift self-heal, failure/recovery, staged teardown + permanent residency — Phase 5A evidence | **Tested** | **yes** | multi-app scale, SSO/RBAC hardening |
-| Observability stack | capacity analysis complete; nothing installed (implementation not yet authorized) | Analysis only | yes (analysis honesty) | Phase 6 implementation gate |
+| Observability stack | capacity analysis complete + decision gate complete (Tier A GO recommendation, docs/09-observability/); metrics-server NOT installed; implementation unauthorized | Analysis only | yes (analysis honesty) | separate authorization for Tier-A execution |
 | Security (Trivy/Kyverno/SBOM) | none | Not implemented | no | Phase 7 |
 | Terraform/OpenTofu + AWS | no cloud account exists | Not implemented | no | Phase 8 + account creation |
 | Dependency automation (Renovate/WUD) | none | Not implemented | no | Phases 1/10 |

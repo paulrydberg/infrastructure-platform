@@ -6,7 +6,14 @@
 > environment, with a reproducible local-to-cloud architecture and an AWS
 > deployment path on the roadmap.
 
-**Status badges / CI:** coming with Phase 1 CI implementation.
+![CI](https://github.com/paulrydberg/infrastructure-platform/actions/workflows/ci.yml/badge.svg)
+
+**CI/CD:** deterministic two-job pipeline (`validate` → `build`) running on
+every pull request and push to `main` — secret scan, shell/Python syntax,
+Compose validation, documentation links, Helm lint/template, chart↔Compose
+consistency, Kubernetes schema validation (kubeconform), container build,
+and real application tests. Controlled failure modes demonstrated via
+[PR #2](https://github.com/paulrydberg/infrastructure-platform/pull/2).
 
 ## What this is
 
@@ -93,9 +100,14 @@ infrastructure-platform/
 
 ## Reproducibility
 
-Current maturity: **Level 0** (honest baseline, per
-[the reproducibility architecture](docs/02-architecture/reproducibility-architecture.md)).
-Target: Level 7 (continuously validated reconstruction) — claimed only when
+Demonstrated reconstruction maturity: **Level 2** — the deployed platform
+(source → bootstrap → container runtime → k3s → Helm → workload) has been
+destroyed and reconstructed from Git with no undocumented manual steps
+(Phase 2/3 evidence; application-level reconstruction additionally shown in
+Phase 1). Full-environment reconstruction — including coexisting host
+services outside this project — is **not yet demonstrated** (that is the
+Level 0→7 journey's remaining work, targeted in Phases 17–18). Long-term
+target: Level 7 (continuously validated reconstruction) — claimed only when
 demonstrated. The [reconstruction manifest](docs/15-reproducibility/reconstruction-manifest.md)
 lists every component, its source of truth, and its restoration mechanism.
 

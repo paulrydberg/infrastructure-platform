@@ -89,7 +89,7 @@ engineering foundation** — not Kubernetes. Deliverables:
 ## Session Log
 
 - **2026-09-24** — Project initialized. GitHub access verified (paulrydberg).
-  Master spec + Amendment 1 received via Telegram and saved verbatim.
+  Master spec + Amendment 1 received from the operator and saved verbatim.
   Prompt log + roadmap tracker created. No platform work performed yet.
 - **2026-09-24** — Clarification 1 received and saved verbatim; operating
   instructions created (`docs/OPERATING-INSTRUCTIONS.md`) binding the

@@ -2,7 +2,7 @@
   "project_id": "infrastructure-platform",
   "name": "Infrastructure Platform",
   "created": "2026-09-24",
-  "created_by": "Paul Rydberg (paulrydberg) via Telegram",
+  "created_by": "Paul Rydberg (paulrydberg)",
   "description": "Reproducible cloud-native infrastructure, platform engineering, GitOps, observability, security, automation, and event-driven AI operations platform. Mac Mini first, AWS later. Dual objective: real engineering system + professional GitHub portfolio.",
   "source_of_truth": {
     "master_spec": "docs/00-project-origin/MASTER-SPEC-FULL.md",
@@ -38,6 +38,5 @@
     "created": "2026-09-24",
     "first_release": "v0.1.0",
     "protection": "linear history, no force-push, no deletion; secret scanning + push protection + dependabot enabled"
-  },
-  "transport_note": "Project memory is permanent; Telegram bot bindings are disposable transports per project-memory-architecture."
+  }
 }

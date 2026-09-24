@@ -8,7 +8,7 @@
 
 ## PROMPT 1 — Master Project Specification
 
-- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Date received:** 2026-09-24 (operator, direct)
 - **Status:** ✅ Saved verbatim
 - **Verbatim copy:** `docs/00-project-origin/MASTER-SPEC-FULL.md`
 - **Role:** Canonical high-level overview + baseline roadmap. Sections 0–94.
@@ -26,7 +26,7 @@
 
 ## PROMPT 2 — GitHub Repository Architecture & Portfolio Amendment
 
-- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Date received:** 2026-09-24 (operator, direct)
 - **Status:** ✅ Saved verbatim
 - **Verbatim copy:** `docs/00-project-origin/AMENDMENT-1-GITHUB-PORTFOLIO-VERBATIM.md`
 - **Role:** Additive amendment to the master spec. Sections 1–53.
@@ -45,7 +45,7 @@
 
 ## PROMPT 3 — Clarification 1: Repository Architecture & Portfolio Discipline
 
-- **Date received:** 2026-09-24 (Telegram, DM with Paul), pre-Phase 0
+- **Date received:** 2026-09-24 (operator, direct), pre-Phase 0
 - **Status:** ✅ Saved verbatim
 - **Verbatim copy:** `docs/00-project-origin/CLARIFICATION-1-REPO-ARCHITECTURE-VERBATIM.md`
 - **Role:** Operating clarification on Amendment 1. Binding from now on.
@@ -63,7 +63,7 @@
 
 ## PROMPT 4 — Authorization to Proceed into Phase 0
 
-- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Date received:** 2026-09-24 (operator, direct)
 - **Status:** ✅ executed within scope
 - **Scope granted:** full Phase 0 discovery (15 investigation areas), read-only,
   all constraints (no installs, no repo creation, no GitHub writes).
@@ -79,7 +79,7 @@
 
 ## PROMPT 5 — Amendment 2: Professional Repository Naming Standard & Positioning
 
-- **Date received:** 2026-09-24 (Telegram, DM with Paul), post-Phase 0
+- **Date received:** 2026-09-24 (operator, direct), post-Phase 0
 - **Status:** ✅ Saved verbatim + fully integrated (documentation-only; no
   repositories created/migrated/renamed/published — boundary preserved)
 - **Verbatim copy:** `docs/00-project-origin/AMENDMENT-2-NAMING-STANDARD-VERBATIM.md`
@@ -104,7 +104,7 @@
 
 ## PROMPT 6 — Phase 1 Authorization (Repository Creation + Container Foundation)
 
-- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Date received:** 2026-09-24 (operator, direct)
 - **Status:** ✅ executed in full; stopped at Phase 1→2 boundary
 - **Scope granted:** create PUBLIC repo `paulrydberg/infrastructure-platform`
   (with pre-push secret/sanitization rules, .gitignore, security boundary,
@@ -120,7 +120,7 @@
 
 ## PROMPT 7 — Phase 2 Evaluation Authorization
 
-- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Date received:** 2026-09-24 (operator, direct)
 - **Status:** ✅ evaluation complete; STOPPED before implementation per stop condition
 - **Scope granted:** 19-point read-only/design evaluation; Docker VM change
   explicitly NOT authorized; k3s install NOT authorized; measurements over estimates.
@@ -134,7 +134,7 @@
 
 ## PROMPT 8 — Phase 2 Implementation Authorization (Option A)
 
-- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Date received:** 2026-09-24 (operator, direct)
 - **Status:** ✅ halted at pre-flight gate by hard rejection condition 1
 - **Scope granted:** Option A — k3s capped container (2.5 GiB / 2 cores) in
   existing VM; no VM resize; no protected-container changes; no observability
@@ -149,7 +149,7 @@
 
 ## PROMPT 9 — Reduced-Envelope Analysis Authorization
 
-- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Date received:** 2026-09-24 (operator, direct)
 - **Status:** ✅ analysis complete; stopped before any choice per decision boundary
 - **Scope granted:** read-only analysis of smaller k3s envelopes (1.0–2.0 GiB),
   staged-vs-resident architecture question, decision artifact with 16 required
@@ -165,7 +165,7 @@
 
 ## PROMPT 10 — Phase 2 Implementation Authorization (A″, 1.5 GiB)
 
-- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Date received:** 2026-09-24 (operator, direct)
 - **Status:** ✅ executed in full; STOPPED at Phase 2→3 boundary per stop condition
 - **Scope granted:** A″ — k3s 1.5 GiB / 2 cores; no VM resize; no protected-workload
   changes; no observability stack; staged stages 2.1–2.5 with per-step
@@ -181,7 +181,7 @@
 
 ## PROMPT 11 — Phase 3 Authorization (Helm)
 
-- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Date received:** 2026-09-24 (operator, direct)
 - **Status:** ✅ executed in full; STOPPED at Phase 3→4 boundary per completion boundary
 - **Result:** Helm v3.16.3 installed (checksum-verified after an honest
   from-memory checksum failure — fetch-then-verify recorded); real chart for
@@ -196,7 +196,7 @@
 
 ## PROMPT 12 — Phase 3 Integrity Verification + Phase 4 Authorization
 
-- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Date received:** 2026-09-24 (operator, direct)
 - **Status:** ✅ both executed; STOPPED at Phase 4→5 boundary
 - **Phase 3 closure:** artifact-integrity check PASSED — clean git status;
   committed templates inspected; blob-hash comparison worktree==HEAD for all
@@ -217,7 +217,7 @@
 
 ## PROMPT 13 — Phase 5A Authorization (Staged GitOps/Argo CD Experiment)
 
-- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Date received:** 2026-09-24 (operator, direct)
 - **Status:** ✅ executed in full; STOPPED at Phase 5 boundary per phase boundary
 - **Scope granted:** staged resource-constrained Argo CD evaluation on the
   unchanged 1.5 GiB envelope; minimum control-loop demonstration on the
@@ -236,7 +236,7 @@
 
 ## PROMPT 14 — Phase 6 Authorization (Observability Capacity Analysis, READ-ONLY)
 
-- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Date received:** 2026-09-24 (operator, direct)
 - **Status:** ✅ analysis complete; STOPPED at implementation decision boundary
 - **Scope granted:** READ-ONLY capacity analysis with Argo preserved intact;
   tiers defined; multi-sample baseline; storage analysis; decision matrix;
