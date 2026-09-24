@@ -142,7 +142,7 @@ jobs:
             sleep 2
           done
           cat /tmp/health.json
-          grep -q '"status": "ok"' /tmp/health.json || { echo "health payload wrong"; docker logs test-demo; exit 1; }
+          grep -q '"status": "NOT-OK-BROKEN"' /tmp/health.json || { echo "health payload wrong"; docker logs test-demo; exit 1; }
           grep -q '"version": "0.1.0"' /tmp/health.json || { echo "version payload wrong"; exit 1; }
           # lifecycle: stop/start must preserve behavior
           docker stop test-demo && docker start test-demo && sleep 2
