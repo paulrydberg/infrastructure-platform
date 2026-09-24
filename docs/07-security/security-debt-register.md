@@ -30,6 +30,9 @@ counts both where they differ.
 | CVE-2026-53612 | libuuid | 2.41-r9 | 2.41.6-r0 | Next controlled base cycle |
 | CVE-2026-78408 | libuuid | 2.41-r9 | 2.41.6-r1 | Next controlled base cycle |
 | CVE-2026-78410 | libuuid | 2.41-r9 | 2.41.6-r0 | Next controlled base cycle |
+| CVE-2026-53613 | libuuid | 2.41-r9 | 2.41.6-r0 | Next controlled base cycle (JSON-corrected 2026-09-24; see §4) |
+| CVE-2026-53614 | libuuid | 2.41-r9 | 2.41.6-r0 | Next controlled base cycle (JSON-corrected 2026-09-24; see §4) |
+| CVE-2026-76642 | libuuid | 2.41-r9 | 2.41.6-r0 | Next controlled base cycle (JSON-corrected 2026-09-24; see §4) |
 
 **Compensating control (applies to all image HIGHs):** application runs
 non-root (runAsUser 65534, runAsNonRoot pod+container), read-only rootfs,
@@ -38,17 +41,20 @@ reduces exposure; it does **not** eliminate the vulnerability.
 
 ## 4. HIGH — awaiting upstream fix (no fix listed by scanner)
 
-| Finding | Package(s) | Action |
-|---|---|---|
-| CVE-2026-53613 | libuuid | Monitor upstream (util-linux); re-check each scan cycle |
-| CVE-2026-53614 | libuuid | Monitor upstream |
-| CVE-2026-76642 | libuuid | Monitor upstream |
+**CORRECTED (2026-09-24, shadow cycle-2 audit — this section is now
+empty).** The authoritative Trivy JSON (runs 36040098028 and 36040505744,
+fields `FixedVersion` + `Status`) shows CVE-2026-53613/53614/76642 ALL
+have fix **2.41.6-r0** listed. The earlier "no fix listed" classification
+came from merged-cell TABLE extraction (blank Fixed Version cells on
+continuation rows) — the exact hazard documented in the policy layer.
+JSON is authoritative; all 8 unique HIGH CVEs are fix-listed and tracked
+in section 3. Original entries: 53613/53614/76642 → monitor upstream
+(obsolete; now base-cycle candidates).
 
-> **Reconciliation note:** the original Phase 7B report grouped 76642 with
-> the fix-available set in one section; the verification gate and this
-> register re-extracted the final artifact and corrected it here. The
-> no-upstream-fix group is **three** unique HIGH CVEs. The original report
-> carries an in-place reconciliation note; its narrative is preserved.
+> History note: this register previously carried a reconciliation moving
+> 76642 INTO this group; that reconciliation was itself based on table
+> extraction and is superseded by the JSON-authoritative correction
+> above. Earlier narratives are preserved in their original files.
 
 ## 5. Medium / Low backlog
 

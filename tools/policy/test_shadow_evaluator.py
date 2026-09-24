@@ -125,17 +125,23 @@ class TestR4(unittest.TestCase):
         self.assertEqual(r["verdict"], "WOULD_FAIL"); self.assertFalse(r["checks"]["image_pinned"])
 
 class TestHistoricalRegression(unittest.TestCase):
-    """Fixtures derived from authoritative artifacts (sanitized minimal
-    copies; values match CI runs on aacc256 [7A] and 36033387702 [current])."""
+    """Fixtures derived from authoritative artifacts. PROVENANCE CORRECTION
+    (cycle-2 audit, run 36040505744): the authoritative Trivy JSON shows
+    CVE-2026-53613/53614/76642 DO have fix 2.41.6-r0 listed — the earlier
+    'no fix listed' classification came from merged-cell table extraction,
+    the exact hazard this policy layer documents. Fixtures updated to the
+    JSON values; the no-fix-HIGH R3 path is now covered by a synthetic
+    fixture (CVE-2026-0001) rather than a mis-derived real one."""
     S7A = trivy_json([v("CVE-2026-31789","libcrypto3","CRITICAL","3.3.7-r0"),
                       v("CVE-2026-31789","libssl3","CRITICAL","3.3.7-r0"),
                       v("CVE-2025-69421","libcrypto3","HIGH"),
                       v("CVE-2025-69421","libssl3","HIGH")])
     CUR = trivy_json([v("CVE-2026-14456","libcrypto3","HIGH","3.5.8-r0"),
                       v("CVE-2026-14456","libssl3","HIGH","3.5.8-r0"),
-                      v("CVE-2026-53613","libuuid","HIGH"),
-                      v("CVE-2026-53614","libuuid","HIGH"),
-                      v("CVE-2026-76642","libuuid","HIGH")])
+                      v("CVE-2026-53613","libuuid","HIGH","2.41.6-r0"),
+                      v("CVE-2026-53614","libuuid","HIGH","2.41.6-r0"),
+                      v("CVE-2026-76642","libuuid","HIGH","2.41.6-r0"),
+                      v("CVE-2026-0001","syntheticpkg","HIGH")])
     def test_7a_r1_would_fail(self):
         f,_ = ev.normalize(json.dumps(self.S7A))
         self.assertEqual(ev.r1(f)["verdict"], "WOULD_FAIL")
@@ -146,7 +152,14 @@ class TestHistoricalRegression(unittest.TestCase):
         f,_ = ev.normalize(json.dumps(self.CUR))
         r = ev.r3(f, [], [])
         ids = {x.get("identity") for x in r["records"] if x.get("state") == "VISIBLE_NO_FIX"}
-        self.assertEqual(ids, {"libuuid|CVE-2026-53613","libuuid|CVE-2026-53614","libuuid|CVE-2026-76642"})
+        # JSON-authoritative: the real current inventory has NO no-fix HIGHs;
+        # only the synthetic fixture CVE surfaces as VISIBLE_NO_FIX.
+        self.assertEqual(ids, {"syntheticpkg|CVE-2026-0001"})
+    def test_current_fix_listed_highs_counted(self):
+        f,_ = ev.normalize(json.dumps(self.CUR))
+        # 5 fix-listed HIGH pairs from the 3 real unique CVEs x their packages
+        # (14456 x2, 53613, 53614, 76642) + the synthetic no-fix = 5 fix-listed.
+        self.assertEqual(len([x for x in f.values() if x["severity"]=="HIGH" and x["fixed"]]), 5)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

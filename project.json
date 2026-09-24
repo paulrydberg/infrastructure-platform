@@ -44,8 +44,8 @@
   },
   "phase": 6,
   "phase_name": "Observability",
-  "status": "phase-7c-shadow-evaluator-implemented-cycle-1-observed-cycle-2-pending",
-  "next_action": "Shadow evaluator live in CI (observational). Cycle 1 @ 07f923f: UNKNOWN (first run, no history - expected). Cycle 2 persistence measurement pending next natural run. Enforcement decision = separate future gate after reviewing >=2 cycles.",
+  "status": "phase-7c-two-shadow-cycles-verified-awaiting-policy-review-gate",
+  "next_action": "Cycles 1+2 real & verified: R2 persistence 65/65 correct vs independent JSON reconciliation; identity audited; no-fix HIGHs corrected to 0 (JSON authoritative; table extraction error fixed in docs/fixtures). Ready for policy-review/enforcement decision gate.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {

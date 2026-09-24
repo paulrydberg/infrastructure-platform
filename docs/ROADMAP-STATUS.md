@@ -341,3 +341,16 @@ engineering foundation** — not Kubernetes. Deliverables:
   (persistence measurement) PENDING the next natural CI run. Enforcement
   NOT enabled; scanner exit behavior unchanged (ci.yml diff = insertions
   only, zero removed lines).
+  **CYCLE 2 OBSERVED & VERIFIED (run 36040505744 @ 85b950e, real push CI):**
+  verdict WARN — R1 PASS, R2 WARN with 65/65 PERSISTENT (0 new/0 resolved),
+  R3 PASS, R4 PASS. Independent raw-JSON reconciliation matches evaluator
+  exactly; no version/severity/fix transitions between cycles; identity
+  PkgName|CVE audited (0 duplicates/0 conflicts) and retained. **MATERIAL
+  DATA CORRECTION:** authoritative JSON shows CVE-2026-53613/53614/76642
+  ARE fix-listed (2.41.6-r0) — the earlier "3 no-fix HIGHs" came from
+  merged-cell TABLE extraction (the documented hazard). All 8 unique HIGH
+  CVEs are fix-listed; debt register/ADR-0005/fixtures/README corrected
+  with reconciliation notes (history preserved, evaluator code unchanged
+  — it used JSON correctly). 20 tests green. Two real cycles complete;
+  shadow system ready for the separate policy-review/enforcement gate.
+  Enforcement NOT enabled.

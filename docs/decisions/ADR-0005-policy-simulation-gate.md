@@ -79,3 +79,16 @@ bounded, auditable home via expiring exceptions. The R1/R2/R4 selection
 stands; the D-layer exception model (Git-tracked, expiring, review-gated)
 is carried into the shadow-mode design as the terminal state of the same
 policy. Shadow mode and enforcement remain unauthorized.
+
+## Post-cycle-2 data correction (2026-09-24)
+
+The shadow cycle-2 audit (run 36040505744) found via the authoritative
+Trivy JSON that CVE-2026-53613/53614/76642 have fix 2.41.6-r0 listed —
+the "three no-fix HIGHs" premise in the historical simulation came from
+merged-cell TABLE extraction. Consequence for this ADR: the no-fix
+population is currently ZERO, so the raw-count policies' blocking burden
+is now 10 fix-listed HIGH pairs; the fix-availability/exception design
+remains the correct shape (a future genuinely-no-fix CRITICAL/HIGH still
+needs the R3/exception path), and the cycle evidence (phase7c-shadow-
+cycles.md §5) is authoritative over the simulation's input data. Rule
+selection R1/R2/R4 unchanged. Enforcement still unauthorized.

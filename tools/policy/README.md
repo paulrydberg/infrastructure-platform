@@ -88,9 +88,11 @@ authorization decision.
 
 Historical regression fixtures are **minimal synthetic copies whose values
 are derived from the authoritative artifacts** (CI runs on `aacc256` =
-7A: CVE-2026-31789 CRITICAL-with-fix present; run 36033387702 = current:
-0 CRITICAL, no-fix HIGHs 53613/53614/76642). They are not full scan
-copies; the relationship to the authoritative runs is documented here.
+7A: CVE-2026-31789 CRITICAL-with-fix present; current = 0 CRITICAL).
+**Provenance correction (cycle-2 audit):** the authoritative JSON shows
+53613/53614/76642 are fix-listed (2.41.6-r0); the fixtures were corrected
+accordingly and the no-fix-HIGH R3 path is now covered by a synthetic
+CVE-2026-0001 fixture. See docs/07-security/phase7c-shadow-cycles.md §5.
 All other fixtures are synthetic (no secrets, no real host data).
 
 ## CI integration (additive only)
