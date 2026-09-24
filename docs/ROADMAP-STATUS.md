@@ -285,3 +285,21 @@ engineering foundation** — not Kubernetes. Deliverables:
   thresholds flipped, no Kyverno, no registry, no signing. Verified 7B
   state unchanged: CRITICAL 0, KSV-0118 0 on deployable manifests, gitleaks
   0, image-policy 0.
+- **2026-09-24** — Phase 7C POLICY SIMULATION & DESIGN GATE complete
+  (Paul-authorized; still NOT implemented, CI untouched). Candidate
+  policies simulated against the two authoritative historical scan
+  inventories (7A: CRIT 2/HIGH 16; 7B: CRIT 0/HIGH 10): raw-count rules
+  (P1/P3) REJECTED — they permanently block on the three no-fix upstream
+  CVEs (53613/53614/76642); the 30-day age rule (P4) REJECTED AS DESIGNED
+  — table output has no per-finding dates, JSON required; SELECTED:
+  R1 CRITICAL-with-fix blocks (simulated FAIL@7A -> PASS@7B, zero
+  exceptions, catches regression), R2 persistence rule for recurring
+  fix-listed HIGHs (needs previous-run artifact), R4 HIGH config gate
+  scoped to RENDERED deployable manifests only (protects the Tier-A
+  evidence manifest from blocking), R3 non-blocking warning channel.
+  Edge cases recorded: CRITICAL-no-fix blind spot (mitigated by R3),
+  merged-cell counting hazard (JSON parsing mandated), evidence-doc
+  scoping, exception-expiry requirement carried over. Enforcement gated
+  behind >=2 shadow-mode cycles with recorded verdicts + explicit Paul
+  authorization. Deliverables: phase7c-policy-simulation.md, ADR-0005.
+  CI remains evidence mode; nothing wired in.

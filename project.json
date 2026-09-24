@@ -44,8 +44,8 @@
   },
   "phase": 6,
   "phase_name": "Observability",
-  "status": "phase-7b-closed-and-verified-phase-7c-proposed-not-implemented",
-  "next_action": "7B closed: CVE-2026-31789 remediated (CRITICAL 0), KSV-0118 remediated (0 HIGH on deployable manifests), debt register live (4 fix-listed HIGH CVEs -> next base cycle; 3 no-fix HIGH CVEs -> upstream). 7C PROPOSED ONLY (ADR-0004 + phase7c-proposal.md): CI-first severity thresholds w/ expiring exceptions; registry/Kyverno/signing deferred. Awaiting Paul authorization.",
+  "status": "phase-7c-policy-designed-and-simulated-awaiting-shadow-mode-authorization",
+  "next_action": "7C policy selected by historical simulation (ADR-0005): R1 CRITICAL-with-fix + R2 persistence + R4 rendered-config gate; R3 warning channel. Simulation: FAIL@7A baseline, PASS@7B. NOT implemented - CI untouched. Next: shadow-mode implementation requires separate authorization.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {
