@@ -160,3 +160,12 @@ engineering foundation** — not Kubernetes. Deliverables:
   Decision matrix: Tier A FITS; Tier B tight; Tier B+ VM-resize-or-staged;
   Tier C not justified. Recommendation: Tier A experiment. Choice deferred
   to Paul. Artifact: docs/09-observability/capacity-analysis.md.
+- **2026-09-24** — GitHub source-of-truth checkpoint (Paul-authorized, Phase 6
+  paused). Verified: clean tree, main==origin/main, all Phase 1-6 artifacts in
+  Git, repo settings (public/protected/scanning) API-verified, branch incident
+  resolved, security sweep clean. One defect found+fixed: platform/argocd/
+  config files lost in failure-test branch cleanup — recovered bit-identical
+  from orphaned commit de6de8a (commit 99c787e). README status table +
+  capability matrix synced to actual phase progress. Resource note from Paul:
+  Ubuntu laptop (Tailscale SSH) may be evaluated as future memory resource —
+  measure-only first, no migration without separate authorization.

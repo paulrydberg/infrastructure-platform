@@ -17,11 +17,11 @@ Functional / Tested / Production-like / Operational / Continuously Validated.
 | Bootstrap validation | bootstrap.sh, 10 checks, idempotent ×2 verified | **Tested** | **yes** | installation automation (Phase 2) |
 | Release management | v0.1.0 tag + GitHub release with honest notes | Functional | **yes** | cadence per phase |
 | Reconstruction (app-level) | destroy → rebuild from source demonstrated (Level 1) | **Tested** | **yes — PR #1 evidence** | cluster-level (Phase 2+) |
-| Kubernetes | none | Not implemented | no | Phase 2 |
-| Helm | none | Not implemented | no | Phase 3 |
-| CI/CD (GitHub Actions) | none | Not implemented | no | Phase 4 |
-| GitOps (Argo CD) | none | Not implemented | no | Phase 5 |
-| Observability stack | none in this project | Not implemented | no | Phase 6 |
+| Kubernetes (k3s, single node, 1.5 GiB envelope) | k3s v1.31.2 resident; fundamentals (namespace/quota/probes/services), drift self-heal, Level 2 reconstruction (down -v → Ready ~8 s) — Phase 2 evidence | **Tested** | **yes — repo + Actions** | multi-node/upgrade scenarios |
+| Helm packaging | platform-demo chart: lint/template/install/upgrade/rollback/reconstruction all validated — Phase 3 evidence | **Tested** | **yes** | chart repo/OCI publication |
+| CI/CD (GitHub Actions) | 2-job pipeline (validate→build) w/ SHA-pinned actions, checksum-gated tools, chart↔compose consistency, kubeconform; controlled failure modes demonstrated — Phase 4 evidence | **Tested** | **yes — public runs** | registry publish job |
+| GitOps (Argo CD) | v2.13.3 minimal footprint (~209 MB measured); control loop, drift self-heal, failure/recovery, staged teardown + permanent residency — Phase 5A evidence | **Tested** | **yes** | multi-app scale, SSO/RBAC hardening |
+| Observability stack | capacity analysis complete; nothing installed (implementation not yet authorized) | Analysis only | yes (analysis honesty) | Phase 6 implementation gate |
 | Security (Trivy/Kyverno/SBOM) | none | Not implemented | no | Phase 7 |
 | Terraform/OpenTofu + AWS | no cloud account exists | Not implemented | no | Phase 8 + account creation |
 | Dependency automation (Renovate/WUD) | none | Not implemented | no | Phases 1/10 |
