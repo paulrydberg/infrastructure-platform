@@ -25,10 +25,10 @@
     "protocol": "ssh",
     "verified": "2026-09-24"
   },
-  "phase": 3,
-  "phase_name": "Helm",
-  "status": "phase-3-complete-awaiting-phase-4-authorization",
-  "next_action": "Phase 3 complete: helm v3.16.3 (checksum-verified), platform-demo chart (pinned, security-preserving), lint/render/dry-run green, install/upgrade/rollback/bad-image-recovery/reconstruction demonstrated, envelope respected. Awaiting Paul's Phase 4 (GitHub Actions CI/CD expansion) authorization. GitOps (Argo CD) Phase 5 gate; observability Phase 6 gate.",
+  "phase": 4,
+  "phase_name": "CI/CD",
+  "status": "phase-4-complete-awaiting-phase-5-authorization",
+  "next_action": "Phase 4 complete: deterministic 2-job CI (validate+build) on GitHub-hosted runners, all gates green on main, both controlled failure modes demonstrated via PR #2 (closed unmerged), branch protection API-verified. Awaiting Paul's Phase 5 (GitOps/Argo CD) authorization. Note: full Argo CD exceeds the 1.5 GiB envelope — staged-window option documented in reduced-envelope-analysis.md.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {

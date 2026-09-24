@@ -194,6 +194,27 @@
   Envelope respected (k3s max 489 MiB); protected workloads clean throughout.
   Report: `docs/06-helm/completion-report.md`.
 
+## PROMPT 12 — Phase 3 Integrity Verification + Phase 4 Authorization
+
+- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Status:** ✅ both executed; STOPPED at Phase 4→5 boundary
+- **Phase 3 closure:** artifact-integrity check PASSED — clean git status;
+  committed templates inspected; blob-hash comparison worktree==HEAD for all
+  4 chart files; helm lint/template re-run against committed tree; no
+  /tmp references. Phase 3 FORMALLY CLOSED
+  (`docs/06-helm/artifact-integrity-verification.md`).
+- **Phase 4 result:** 2-job pipeline (validate→build) on GitHub-hosted
+  runners; all Phase 2/3 gates retained + helm lint/render, chart↔compose
+  image-tag consistency, floating-ref ban, kubeconform strict validation,
+  container build + real app tests, rendered-manifest artifact. Actions
+  pinned to SHAs; helm/kubeconform checksum-gated; least-privilege
+  (contents:read); zero secrets. Failure modes demonstrated on PR #2
+  (invalid template → lint fail; broken app assertion → build fail);
+  valid state restored; protection verified via API (linear history, no
+  force-push/deletion). 3 honest CI-development failures recorded and fixed
+  via normal commits (d17482f, ab97a4c). Report:
+  `docs/07-ci-cd/completion-report.md`. Awaiting Phase 5 (GitOps) authorization.
+
 ---
 
 ## Standing Instructions (from Paul, pre-prompt)

@@ -23,7 +23,7 @@ Docker-VM resource-negotiation decision, which requires a separate explicit OK).
 | 1 | Local Container Foundation | ✅ complete | platform-demo 0.1.0 + bootstrap + CI + v0.1.0; PR #1 CI-green; reconstruction demonstrated (Level 1) |
 | 2 | Kubernetes | ✅ complete (A″ 1.5 GiB envelope) | k3s v1.31.2 steady 450-475 MiB/cap 1536; fundamentals+quota+self-heal+rollout-undo demonstrated; reconstruction Level 2 (Ready in ~8s); 20/20 protected untouched; stopped at Phase 2→3 gate |
 | 3 | Helm | ✅ complete | helm v3.16.3 (checksum-verified); platform-demo chart lint/render/dry-run green; install+upgrade+rollback+bad-image-recovery+reconstruction demonstrated; envelope respected (k3s 489 MiB max); stopped at Phase 3→4 gate |
-| 4 | CI/CD | 🔲 not started | GitHub Actions |
+| 4 | CI/CD | ✅ complete | 2-job pipeline (validate+build) w/ pinned SHAs, checksum-gated tools, chart/image consistency, kubeconform; both controlled failure modes demonstrated (PR #2); protection API-verified; stopped at Phase 4→5 gate |
 | 5 | GitOps | 🔲 not started | Argo CD |
 | 6 | Observability | 🔲 not started | Prometheus/Grafana/Loki/OTel |
 | 7 | Security | 🔲 not started | Trivy/Kyverno/SBOM |
@@ -133,3 +133,16 @@ engineering foundation** — not Kubernetes. Deliverables:
   from Git source; lesson recorded (Git path is the only Helm source).
   Envelope respected (k3s max 489 MiB); protected workloads clean. Report:
   docs/06-helm/completion-report.md. STOPPED at Phase 3→4 boundary.
+- **2026-09-24** — Phase 3 artifact-integrity verification PASSED (blob-hash
+  worktree==HEAD for all chart files; lint/template re-validated against
+  committed tree). Phase 3 FORMALLY CLOSED.
+- **2026-09-24** — Phase 4 EXECUTED on Paul's authorization. 2-job CI
+  (validate→build) on GitHub-hosted runners: helm lint/render, chart↔compose
+  consistency, kubeconform schema validation, container build + app tests,
+  manifest artifact. Actions pinned to SHAs, tools checksum-gated,
+  least-privilege, zero secrets. Controlled failure modes demonstrated via
+  PR #2 (helm lint fail; app-assertion fail; build skipped/fail correctly);
+  restored green. 3 CI-development failures honestly recorded (wrong
+  hardcoded checksum; .sha256sum filename mismatch; kubectl dry-run needs
+  API server → kubeconform). Protection API-verified. Report:
+  docs/07-ci-cd/completion-report.md. STOPPED at Phase 4→5 boundary.
