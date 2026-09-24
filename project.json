@@ -25,10 +25,10 @@
     "protocol": "ssh",
     "verified": "2026-09-24"
   },
-  "phase": 1,
-  "phase_name": "Local Container Foundation",
-  "status": "phase-1-complete-awaiting-phase-2-authorization",
-  "next_action": "Paul's authorization for Phase 2 (Kubernetes: why-document, k3s ADR, Docker VM resource negotiation — separate explicit OK required for the shared-resource change). Phase 1 artifacts: platform-demo 0.1.0, bootstrap.sh, CI, PR #1, release v0.1.0.",
+  "phase": 2,
+  "phase_name": "Kubernetes",
+  "status": "option-a-aborted-rc1-awaiting-operator-decision",
+  "next_action": "Rejection condition 1 triggered at pre-flight (VM available 2465MB < 3.0GiB threshold, measured directly). Paul to choose: A-prime (retry when VM memory recovers), A-double (reduced k3s cap 1.5GiB — needs new authorization), B (Docker VM resize), C (defer k8s, compose path), D (hardware/env change). No limits changed; no k3s started; protected workloads untouched.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {

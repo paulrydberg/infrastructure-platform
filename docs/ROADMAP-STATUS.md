@@ -21,7 +21,7 @@ Docker-VM resource-negotiation decision, which requires a separate explicit OK).
 |-------|------|--------|-------|
 | 0 | Discovery | ✅ complete | Read-only; discovery report delivered; stopped at boundary |
 | 1 | Local Container Foundation | ✅ complete | platform-demo 0.1.0 + bootstrap + CI + v0.1.0; PR #1 CI-green; reconstruction demonstrated (Level 1) |
-| 2 | Kubernetes | 🔄 evaluation complete, implementation gated | Measured: Option A (capped k3s container, no VM change) recommended; 5 rejection conditions defined; awaiting Paul's implementation authorization + option choice |
+| 2 | Kubernetes | 🔄 reduced-envelope analysis complete | 1.0GiB REJECT · 1.25 MARGINAL · 1.5 VIABLE (recommended) · 1.75 VIABLE+ staged Argo · 2.0 risky; staged-vs-resident analyzed; A′/A″/B/C/D await Paul |
 | 3 | Helm | 🔲 not started | |
 | 4 | CI/CD | 🔲 not started | GitHub Actions |
 | 5 | GitOps | 🔲 not started | Argo CD |

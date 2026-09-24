@@ -132,6 +132,37 @@
   preserved, decision deferred to Paul. Docs: `docs/05-kubernetes/` (4 docs).
   Awaiting authorization for Phase 2 implementation + option choice.
 
+## PROMPT 8 — Phase 2 Implementation Authorization (Option A)
+
+- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Status:** ✅ halted at pre-flight gate by hard rejection condition 1
+- **Scope granted:** Option A — k3s capped container (2.5 GiB / 2 cores) in
+  existing VM; no VM resize; no protected-container changes; no observability
+  stack; staged per-step discipline; 5 hard rejection criteria; rollback rule.
+- **Result:** REJECTION CONDITION 1 TRIGGERED before k3s startup — direct
+  /proc/meminfo measurement (5 samples, avg 2465 MB available) below the
+  3.0 GiB threshold. Stopped, evidence collected, state verified clean, no
+  rollback needed (nothing started), no limits changed. Measurement-method
+  lesson recorded (derived estimate was wrong; direct instrumentation is now
+  the standard). Options A′/A″/B/C/D documented for Paul — none chosen.
+  Experiment record: `docs/05-kubernetes/experiment-optiona-rc1-abort.md`.
+
+## PROMPT 9 — Reduced-Envelope Analysis Authorization
+
+- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Status:** ✅ analysis complete; stopped before any choice per decision boundary
+- **Scope granted:** read-only analysis of smaller k3s envelopes (1.0–2.0 GiB),
+  staged-vs-resident architecture question, decision artifact with 16 required
+  sections; no k3s start, no limit lowering, no host changes.
+- **Result:** VM memory fully decomposed (containers 4353 MB + VM overhead
+  ~662 MB → available 2509 MB; OLAP db dominant consumer, stable). Envelope
+  verdicts: 1.0 GiB REJECT · 1.25 MARGINAL · **1.5 GiB VIABLE (recommended
+  evidence-based)** · 1.75 VIABLE+ (staged Argo core) · 2.0 risky-now.
+  Staged operation = peak(max) not sum(resident) — materially reduces
+  requirements; documented as architectural option. Evidence classes
+  [M]/[D]/[E]/[A]/[U] kept distinct throughout. Decision A′/A″/B/C/D
+  deferred to Paul. Artifact: `docs/05-kubernetes/reduced-envelope-analysis.md`.
+
 ---
 
 ## Standing Instructions (from Paul, pre-prompt)
