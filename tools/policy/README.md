@@ -110,6 +110,13 @@ history).
 ## Limitations (explicit)
 
 - **First run:** no previous artifact → R2 UNKNOWN; persistence measurement starts at cycle 2
+- **CI failure #1 (recorded, preserved in history):** run 36039544280 @ `41ed0e9` — the CLI
+  eagerly opened the absent previous-run file (`FileNotFoundError`) instead of letting the
+  evaluator record UNKNOWN history. Symptom: build job failed at the shadow step on the very
+  first shadow run. Cause: CLI passed an open handle of a nonexistent path. Fix: pass the
+  path; `load_prev` resolves file-missing to the documented first-run branch. Verified by
+  rerunning the exact first-run scenario locally (verdict UNKNOWN, R2 UNKNOWN,
+  history_available=false, R3 carries the missing-history record) plus the full 19-test suite.
 - **Artifact retention:** security-evidence is 30-day; runs further apart lose history → UNKNOWN, not zero
 - **Unknown fix availability:** empty `FixedVersion` is treated as no-fix; field-absence vs explicit-empty distinction requires scanner confirmation (recorded UNKNOWN only where the input is ambiguous)
 - **Exploitability:** never inferred; compensating controls produce risk dispositions, not remediation

@@ -59,9 +59,17 @@ def normalize(scan_json):
 def load_prev(raw):
     """Previous-run findings; None when history genuinely absent.
     MISSING HISTORY IS NOT 'NO VULNERABILITIES' — callers must treat it
-    as UNKNOWN for R2."""
+    as UNKNOWN for R2. `raw` may be a path (missing file -> None) or JSON
+    text."""
     if raw is None:
         return None, ["previous-run artifact unavailable (first run or retention gap)"]
+    if isinstance(raw, (str, bytes)) and raw.strip().endswith(".json"):
+        if not os.path.exists(raw):
+            return None, ["previous-run artifact unavailable (first run or retention gap)"]
+        try:
+            raw = open(raw).read()
+        except Exception as e:
+            return None, [f"previous-run artifact unreadable: {e}"]
     try:
         prev, issues = normalize(raw)
         return prev, issues
@@ -230,7 +238,9 @@ if __name__ == "__main__":
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     ts = os.environ.get("EVAL_TIMESTAMP") or datetime.datetime.now(datetime.timezone.utc).isoformat()
-    result = evaluate(a.current, open(a.previous).read() if a.previous else None,
-                      a.rendered, a.exceptions, a.commit, ts)
+    # Pass the PATH, not an open handle: a missing previous file is a normal
+    # first-run/retention-gap condition and must reach evaluate() as such
+    # (recorded as UNKNOWN history), never raise here (7C CI failure #1).
+    result = evaluate(a.current, a.previous, a.rendered, a.exceptions, a.commit, ts)
     json.dump(result, open(a.out, "w"), indent=2, sort_keys=True)
     print(f"shadow verdict: {result['verdict']} (never blocking)")
