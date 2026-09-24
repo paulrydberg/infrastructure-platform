@@ -44,8 +44,8 @@
   },
   "phase": 6,
   "phase_name": "Observability",
-  "status": "phase-7c-p1-p5-hardened-shadow-active-enforcement-off",
-  "next_action": "P1-P5 hardening complete (schema validation, severity handling, provenance, version separation, enforcement/rollback tests; 50 tests green; real cycles 1-3 compatible). --enforce exists in code, NOT used by CI. Next: final Enforcement Authorization Gate (reviews hardening, diff, rollback evidence) -> separate decision to flip.",
+  "status": "phase-7c-complete-policy-enforcement-active-verified",
+  "next_action": "Enforcement ACTIVE since eb451e2 (verified run 36074112719: WARN -> green; blocking path unit-proven). Rollback = delete gate step. Next roadmap decision separate.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {

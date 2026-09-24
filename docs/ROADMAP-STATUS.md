@@ -388,3 +388,15 @@ engineering foundation** — not Kubernetes. Deliverables:
   65/65 persistent) + provenance + schema_validated on all three. CI
   diff additive-only (provenance env/args; zero --enforce usage). No
   runtime infrastructure changes; LLM inference 0.
+  **POLICY ENFORCEMENT ACTIVATED (2026-09-24, Paul-authorized final gate;
+  commit eb451e2; verified run 36074112719):** preflight passed (P1-P5
+  source probes, silent-PASS regression, cycle replays, branch-protection
+  review — no new required check needed, gate lives in existing build
+  job). Activation = one new final CI step AFTER all artifact uploads:
+  WOULD_FAIL/UNKNOWN verdicts exit non-zero; WARN/EXCEPTION/PASS green.
+  Real run: gate step success, verdict WARN (65 persistent, 0 critical,
+  R4 PASS), all three artifacts present. Blocking path proven via unit
+  suite (Critical+fix, R4, UNKNOWN -> exit 1) + real-artifact gate
+  simulation; rollback = delete the single gate step. Security scanning
+  ACTIVE, policy evaluator ACTIVE, policy enforcement ACTIVE, shadow
+  semantics retained for rollback. No history rewritten.

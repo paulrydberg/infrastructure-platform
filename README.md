@@ -53,7 +53,7 @@ baselines are measured and documented in
 | Phase 7B — Security triage & remediation | 🧪 CRITICALs remediated (base bump, verified by rescan), KSV-0118 root-caused & fixed via pod-level securityContext, full finding dispositions; enforcement still deferred |
 | Phase 7A — Security (CI evidence) | 🔎 Trivy + gitleaks + SPDX SBOM in CI, evidence mode; policy enforcement is a future gate |
 | Phase 6 — Observability | 📊 Analysis + Tier-A metrics-server experiment complete — functionally validated, closed on a host swap-pressure gate (rolled back); not a persistent capability |
-| Security policy (thresholds/Kyverno) | 📋 Proposed (Phase 7C — ADR-0004; NOT implemented) |
+| Security policy enforcement (deterministic CI gate) | ✅ Active — Phase 7C: FAIL/UNKNOWN block CI (artifact-preserving), WARN/EXCEPTION non-blocking; rollback = single step |
 | Registry/signing/provenance (digest-pinned deploys) | 📋 Deferred (requires registry decision; SBOM currently records OCI config digest only) |
 | AWS (Terraform/OpenTofu, VPC/IAM/ECR/EKS) | 📋 Planned (Phase 8+) |
 | Dependency automation (Renovate, WUD) | 📋 Planned (WUD deferred pending registry; Renovate Phase 10) |
