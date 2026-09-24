@@ -248,3 +248,24 @@ engineering foundation** — not Kubernetes. Deliverables:
   image (digest field empty: local CI build has no registry digest ->
   documented 7B gap); image-reference policy 0 violations. Evidence
   artifact (30-day retention) published with the run.
+- **2026-09-24** — Phase 7B (triage & remediation) COMPLETE (Paul-authorized;
+  evidence mode maintained, no blocking thresholds enabled). Starting SHA
+  1f99653. Commits: 32cf159 (triage: candidate-base measurement table,
+  KSV-0118 controlled experiments), 990572e (remediation: base
+  python:3.12-alpine3.20 -> alpine3.22 — smallest supported base resolving
+  CVE-2026-31789, measured 3.5.6-r0 vs still-vulnerable alpine3.21 tag at
+  3.5.5; pod-level securityContext added to chart + fundamentals fixture
+  after controlled tests PROVED the rule requires pod-level SC, rejecting
+  the initial false-positive hypothesis), b410810 (SBOM records OCI config
+  digest, labeled as such; registry manifest digest = future decision).
+  Results [M]: CRITICAL 2 -> 0 (rescan-verified); config HIGH 3 -> 1 (the
+  remainder is the metrics-server manifest inside the Tier-A experiment
+  doc = historical evidence, NOT_APPLICABLE); image HIGH 16 -> 10 (newer
+  base surfaces newer advisories; each dispositioned — 5 fixable via next
+  base cycle, 2 awaiting upstream fix); secrets 0; image policy 0;
+  helm/kubeconform/app tests green throughout; gitleaks 0 both scans.
+  Security controls preserved & strengthened (non-root, read-only rootfs,
+  no-escalation, seccomp now pod+container). No live-cluster mutation; all
+  remediation via Git -> CI. Full report:
+  docs/07-security/phase7b-report.md. STOPPED at 7B boundary; 7C (policy
+  thresholds, registry allowlist, Kyverno audit) proposed, unauthorized.
