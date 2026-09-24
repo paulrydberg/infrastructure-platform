@@ -210,11 +210,19 @@ jobs:
           format: spdx-json
           output: sbom-platform-demo.spdx.json
 
-      - name: record image digest + SBOM identity
+      - name: record image identity + SBOM metadata
         run: |
+          # Two distinct identities, labeled precisely (do not conflate):
+          # - image ID = the OCI config digest of the locally built image
+          #   (immutable, content-addressed, no registry needed)
+          # - registry manifest digest = only exists after a registry push
+          #   (out of 7B scope; documented as future step)
+          IMG_ID=$(docker images platform-demo:0.1.0 --no-trunc --format '{{.ID}}' | sed 's/^sha256://')
           {
             echo "image: platform-demo:0.1.0"
-            echo "digest: $(docker images platform-demo:0.1.0 --digests --format '{{.Digest}}')"
+            echo "image_id_config_digest: sha256:${IMG_ID#sha256:}"
+            echo "image_id_note: OCI config digest of the local build (immutable); NOT a registry manifest digest"
+            echo "registry_manifest_digest: unavailable without registry push (future decision)"
             echo "sbom-format: SPDX (spdx-json via trivy v0.70.0)"
             echo "generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo "method: trivy image --format spdx-json (CI, github-hosted runner)"
