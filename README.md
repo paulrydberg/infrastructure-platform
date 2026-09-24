@@ -38,15 +38,15 @@ baselines are measured and documented in
 |-----------|--------|
 | Phase 0 — Discovery, architecture baseline, threat model, reproducibility contract | ✅ Implemented (2026-09-24) |
 | Repository + documentation foundation | ✅ Implemented |
-| Phase 1 — Local container foundation | 🔄 In progress |
-| Kubernetes (k3s or justified alternative) | 📋 Planned (Phase 2) |
-| Helm packaging | 📋 Planned (Phase 3) |
-| CI/CD (GitHub Actions) | 📋 Planned (Phase 4) |
-| GitOps (Argo CD) | 📋 Planned (Phase 5) |
-| Observability (Prometheus/Grafana/Loki/OTel) | 📋 Planned (Phase 6) |
+| Phase 1 — Local container foundation | ✅ Implemented (v0.1.0) |
+| Phase 2 — Kubernetes (k3s, 1.5 GiB envelope) | ✅ Implemented — fundamentals, drift self-heal, Level 2 reconstruction demonstrated |
+| Phase 3 — Helm packaging | ✅ Implemented — lint/render/install/upgrade/rollback/reconstruction validated |
+| Phase 4 — CI/CD (GitHub Actions) | ✅ Implemented — deterministic validate+build pipeline, failure modes demonstrated |
+| Phase 5A — GitOps (Argo CD, minimal footprint) | ✅ Implemented — control loop, drift self-heal, failure/recovery demonstrated; measured ~209 MB |
+| Phase 6 — Observability | 📊 Capacity analysis complete — implementation not yet authorized |
 | Security (Trivy/Kyverno/SBOM) | 📋 Planned (Phase 7) |
 | AWS (Terraform/OpenTofu, VPC/IAM/ECR/EKS) | 📋 Planned (Phase 8+) |
-| Dependency automation (Renovate, WUD) | 📋 Planned (Phases 1/10) |
+| Dependency automation (Renovate, WUD) | 📋 Planned (WUD deferred pending registry; Renovate Phase 10) |
 | AI operations (optional, resource-governed, event-driven) | 📋 Planned (Phases 11–15) |
 | Reproducibility/DR demonstrations | 📋 Planned (Phases 17–18) |
 
