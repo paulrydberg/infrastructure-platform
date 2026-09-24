@@ -1,0 +1,25 @@
+# GitOps seed: the Application definition that makes Argo CD manage
+# platform-demo from this repository. This file IS the desired state for the
+# GitOps layer itself (declarative, in Git, per Phase 5A requirements).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-demo
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/paulrydberg/infrastructure-platform.git
+    targetRevision: main
+    path: platform/helm/platform-demo
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform-demo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

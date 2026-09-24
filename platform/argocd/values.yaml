@@ -1,0 +1,60 @@
+# Argo CD staged-experiment install values (Phase 5A)
+#
+# Sized for the 1.5 GiB k3s envelope per docs/05-kubernetes/reduced-envelope-analysis.md.
+# MINIMAL footprint: core components only. notifications/applicationset/dex
+# disabled. Every component has explicit requests/limits so the k3s envelope
+# cannot be silently exceeded. Reality is measured in the phase-5a report.
+
+global:
+  image:
+    tag: v2.13.3
+
+controller:            # application controller (the reconciliation engine)
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+
+server:                # API + UI (accessed via port-forward only)
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+
+repoServer:            # clones/renders the Git repo (helm template)
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+
+redis:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+
+dex:
+  enabled: false
+
+notifications:
+  enabled: false
+
+applicationSet:
+  enabled: false
+
+configs:
+  params:
+    server.insecure: false
