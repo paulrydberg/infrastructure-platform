@@ -118,6 +118,20 @@
   report at `docs/03-foundation/completion-report.md`. Awaiting Phase 2
   authorization.
 
+## PROMPT 7 — Phase 2 Evaluation Authorization
+
+- **Date received:** 2026-09-24 (Telegram, DM with Paul)
+- **Status:** ✅ evaluation complete; STOPPED before implementation per stop condition
+- **Scope granted:** 19-point read-only/design evaluation; Docker VM change
+  explicitly NOT authorized; k3s install NOT authorized; measurements over estimates.
+- **Result:** measured protected-workload baseline (21 containers, ~2.4 GiB in
+  VM, 17/20 unlimited-cap risk, VM ~4.5–5 GiB free); k3s selection experiment;
+  resource-negotiation report with Option A (capped k3s container, NO Docker
+  Desktop change — recommended) vs Option B (VM resize — not recommended now);
+  5 explicit rejection conditions; rollback = one compose down. Alternatives
+  preserved, decision deferred to Paul. Docs: `docs/05-kubernetes/` (4 docs).
+  Awaiting authorization for Phase 2 implementation + option choice.
+
 ---
 
 ## Standing Instructions (from Paul, pre-prompt)
