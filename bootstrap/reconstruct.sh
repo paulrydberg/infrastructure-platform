@@ -33,6 +33,8 @@ export PATH="$HOME/tools/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr
 MANIFEST="$REPO_ROOT/reconstruction-manifest.yaml"
 REPORT_DIR="${RECONSTRUCT_REPORT_DIR:-$REPO_ROOT/docs/15-reproducibility/reports}"
 REPORT="$REPORT_DIR/reconstruct-$(date -u +%Y%m%dT%H%M%SZ).json"
+STAGES_TSV="$(mktemp /tmp/reconstruct-stages.XXXXXX.tsv)"
+trap 'rm -f "$STAGES_TSV"' EXIT
 MODE_EXECUTE="${RECONSTRUCT_EXECUTE:-0}"
 MODE_RESUME="${RECONSTRUCT_RESUME:-0}"
 
@@ -47,7 +49,12 @@ START_TS=$(date -u +%s)
 stage() {  # stage <name> <status> <detail...>
   local name="$1" status="$2"; shift 2
   local detail="$*"
-  STAGES+=("{\"stage\":\"$name\",\"status\":\"$status\",\"detail\":\"$detail\"}")
+  # DEFECT L4-5: stage details containing quotes/commas broke naive
+  # shell-side JSON assembly (the successful Level 4 run's report silently
+  # failed to generate). Correction: stages are recorded as tab-separated
+  # fields and serialized to JSON by python (single source of truth for
+  # escaping).
+  printf '%s\t%s\t%s\n' "$name" "$status" "$detail" >> "$STAGES_TSV"
   case "$status" in
     PASS) PASS=$((PASS+1)); echo "PASS   $name — $detail" ;;
     WARN) WARN=$((WARN+1)); echo "WARN   $name — $detail" ;;
@@ -60,11 +67,13 @@ stage() {  # stage <name> <status> <detail...>
 emit_report() {  # emit_report <final_status>
   local final="$1"
   local duration=$(( $(date -u +%s) - START_TS ))
-  local stages_json
-  stages_json=$(IFS=,; echo "[${STAGES[*]}]")
-  python3 - "$REPORT" "$final" "$duration" "$stages_json" <<'PYEOF'
-import json, sys, datetime
-path, final, duration, stages = sys.argv[1], sys.argv[2], int(sys.argv[3]), json.loads(sys.argv[4])
+  python3 - "$REPORT" "$final" "$duration" "$STAGES_TSV" <<'PYEOF'
+import json, sys, datetime, csv
+path, final, duration, tsv = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4]
+stages = [
+    {"stage": r[0], "status": r[1], "detail": r[2] if len(r) > 2 else ""}
+    for r in csv.reader(open(tsv), delimiter="\t")
+]
 report = {
     "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     "source_commit": __import__("subprocess").run(
