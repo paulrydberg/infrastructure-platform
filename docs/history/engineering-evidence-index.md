@@ -48,6 +48,10 @@ See the repository README (architecture, current maturity, links).
   575a1cc, 018c1e3, a9e7afd, 72fba1f, da7e31d)
 - Scanner incident + policy silent-PASS window: docs/07-security/
 
+## Audits
+- docs/history/post-level4-audit.md (independent post-Level-4 audit +
+  next-phase decision gate)
+
 ## ADRs
 - docs/decisions/ (ADR-0001..0006 — foundation, naming, portfolio,
   enforcement deferral, policy simulation, post-Level-3 direction)

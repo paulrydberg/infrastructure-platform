@@ -462,3 +462,12 @@ enforced before every disposable run; protected fleet untouched
 throughout. Zero inference; no cloud; no new resident services.
 LEVEL 4 COMPLETE. Level 5+ / AWS / dependency automation remain
 separate future decisions per ADR-0006 sequencing.
+
+## Post-Level-4 Audit (2026-09-25)
+Independent audit verified the Level 4 evidence, defect history,
+hidden-state elimination, and failure semantics
+(docs/history/post-level4-audit.md). One follow-up defect recorded
+(report-writer failure is non-fatal; fix requires separate
+authorization). NEXT PHASE: DECISION PENDING — audit recommends
+report-authority fix followed by continuous reproducibility
+validation (Candidate E); nothing implemented.
