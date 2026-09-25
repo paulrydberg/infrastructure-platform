@@ -26,7 +26,7 @@ Docker-VM resource-negotiation decision, which requires a separate explicit OK).
 | 4 | CI/CD | ✅ complete | 2-job pipeline (validate+build) w/ pinned SHAs, checksum-gated tools, chart/image consistency, kubeconform; both controlled failure modes demonstrated (PR #2); protection API-verified; stopped at Phase 4→5 gate |
 | 5 | GitOps | ✅ Phase 5A complete | Argo CD v2.13.3 measured ~209 MB pod memory; control loop + drift self-heal + failure/recovery demonstrated; staged teardown AND permanent residency both verified within 1.5 GiB envelope; stopped at Phase 5 boundary |
 | 6 | Observability | 🔄 capacity analysis complete (READ-ONLY) | Tier A (metrics-server) FITS envelope; Tier B tight; Tier B+ requires VM resize or staging; nothing installed; awaiting Paul's architecture choice |
-| 7 | Security | 🔲 not started | Trivy/Kyverno/SBOM |
+| 7 | Security | ✅ complete (exceeded scope) | Trivy+Gitleaks+SBOM+image policy+enforcement LIVE (Phases 7A-7C) |
 | 8 | AWS | 🔲 not started | Terraform/OpenTofu |
 | 9 | Local-to-Cloud Promotion | 🔲 not started | |
 | 10 | Dependency Automation | 🔲 not started | Renovate |
@@ -34,9 +34,9 @@ Docker-VM resource-negotiation decision, which requires a separate explicit OK).
 | 12 | AI Dependency Migration | 🔲 not started | |
 | 13 | AI Container Updates | 🔲 not started | WUD → policy → AI → PR |
 | 14 | AI Incident Response | 🔲 not started | |
-| 15 | Policy Engine | 🔲 not started | |
+| 15 | Policy Engine | ✅ complete (exceeded scope) | schema-validated evaluator + enforcement (Phase 7C) |
 | 16 | Platform Engineering | 🔲 not started | Backstage evaluation |
-| 17 | Reproducibility | 🔲 not started | NOT optional |
+| 17 | Reproducibility | ✅ Level 4 demonstrated | manifest+runner+GitOps rebuild+failure tests (Phase 8) |
 | 18 | Continuous Reconstruction | 🔲 not started | |
 | 19 | Final Architecture | 🔲 not started | |
 
@@ -468,6 +468,9 @@ Independent audit verified the Level 4 evidence, defect history,
 hidden-state elimination, and failure semantics
 (docs/history/post-level4-audit.md). One follow-up defect recorded
 (report-writer failure is non-fatal; fix requires separate
-authorization). NEXT PHASE: DECISION PENDING — audit recommends
-report-authority fix followed by continuous reproducibility
-validation (Candidate E); nothing implemented.
+authorization). NEXT PHASE: DECISION PENDING. Report-authority defect L4-6 was
+remediated (aa4a6ac: evidence authority enforced, 11/11 tests).
+Roadmap re-sequenced by ADR-0007: next authorization = Level 6
+periodic reproducibility validation; dependency automation follows;
+AWS/observability/AI/DR remain deferred with reasons. Nothing
+implemented beyond the authorized fix.
