@@ -60,3 +60,4 @@ backups/
 *.token
 *.secret
 *_credentials*
+docs/15-reproducibility/reports/
