@@ -248,6 +248,15 @@ YAML
 
 
   # ---- LEVEL 4: disposable GitOps reconstruction (ADR-0006 follow-through) ----
+  # DEFECT L4-1 (found 2026-09-25, run reconstruct-20260925T005854Z): an
+  # inherited KUBECONFIG environment variable pointed helm at the PRODUCTION
+  # cluster; helm's release-ownership guard refused the install (fast FAIL,
+  # production untouched - the guard worked as designed). Correction: all
+  # disposable-stage commands pin KUBECONFIG to the disposable kubeconfig
+  # explicitly; inherited KUBECONFIG is deliberately ignored here. Lesson:
+  # environment inheritance is hidden state - disposable stages must not
+  # trust ambient credentials.
+  export KUBECONFIG="$DISPOSABLE_KUBECONFIG"
   # All state comes from the repository: pinned chart version (7.7.11), pinned
   # values (platform/argocd/values.yaml), source-controlled Application
   # manifest, platform-demo chart. External deps recorded in the report:
