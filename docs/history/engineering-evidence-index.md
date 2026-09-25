@@ -20,6 +20,8 @@ See the repository README (architecture, current maturity, links).
   reports/level4-final-evidence.json (clean path, 20/20 PASS),
   reports/level4-failure-tests-evidence.txt (failure injection + recovery 9/9)
 - Suite: bootstrap/level4-failure-tests.sh
+- Post-Level-6 audit: docs/history/post-level6-audit.md (AUD-1 found+fixed,
+  eight-defect reconciliation, Level 6 mechanism verified, longitudinal boundary set)
 - Level 6 (periodic verification): docs/15-reproducibility/level6-completion-record.md,
   wrapper bootstrap/periodic-validate.sh, scheduler plist + status checker
   (bootstrap/periodic-status.sh), tests bootstrap/periodic-validate-tests.sh
