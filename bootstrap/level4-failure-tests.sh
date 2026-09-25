@@ -41,8 +41,16 @@ if docker ps -a --format '{{.Names}}' | grep -q '^reconstruct-k3s-disposable$'; 
 fi
 # bounded 300s readiness poll (observed: k3s can take >120s when Docker is
 # still releasing the previous disposable run's port)
-for i in $(seq 1 60); do sleep 5; if KUBECONFIG=$KCFG kubectl get nodes 2>/dev/null | grep -q ' Ready '; then break; fi; done
-sed -i '' 's#server: https://127.0.0.1:6443#server: https://127.0.0.1:16443#' $KCFG 2>/dev/null
+# DEFECT L4-FT-2: k3s may transiently serve a kubeconfig/cert pair that
+# fails host-side verification during early boot (observed: x509 unknown
+# authority while node was in fact Ready; CAs matched after k3s settled).
+# Poll requires a SUCCESSFUL API call (not just node presence) and retries
+# after re-reading the rewritten kubeconfig.
+for i in $(seq 1 60); do
+  sleep 5
+  sed -i '' 's#server: https://127.0.0.1:6443#server: https://127.0.0.1:16443#' $KCFG 2>/dev/null
+  if KUBECONFIG=$KCFG kubectl get ns >/dev/null 2>&1 && KUBECONFIG=$KCFG kubectl get nodes 2>/dev/null | grep -q ' Ready '; then break; fi
+done
 assert_eq "disposable k3s Ready" "$(KUBECONFIG=$KCFG kubectl get nodes 2>/dev/null | grep -c ' Ready ')" "1"
 if [ "$(KUBECONFIG=$KCFG kubectl get nodes 2>/dev/null | grep -c ' Ready ')" != "1" ]; then
   echo "SETUP FAILED — cluster never became Ready; aborting (no bogus verdicts)"; exit 9
