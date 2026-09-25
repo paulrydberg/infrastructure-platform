@@ -1,0 +1,117 @@
+# reconstruction-manifest.yaml — machine-readable reconstruction contract
+# (Phase 8 / Level 2->3; human-readable counterpart:
+#  docs/15-reproducibility/reconstruction-manifest.md)
+#
+# Rule: every entry describes what EXISTS. No aspirational stubs.
+# Classification vocabulary: DETERMINISTIC | EXTERNAL_DEPENDENCY | STATEFUL | MANUAL | UNRESOLVED
+manifest_version: "1.0.0"
+project: infrastructure-platform
+levels:
+  achieved: 2          # demonstrated: k3s + helm + platform-demo rebuild from source
+  target_this_phase: 3 # automated PLATFORM reconstruction (deterministic components)
+
+reconstruction_order:
+  - source
+  - prerequisites
+  - container_runtime
+  - kubernetes
+  - gitops
+  - platform_workload
+  - validation
+
+components:
+
+  source:
+    purpose: canonical definitions for every deterministic component
+    classification: DETERMINISTIC
+    source_of_truth: "github.com/paulrydberg/infrastructure-platform (git)"
+    mechanism: "git clone at pinned commit"
+    dependencies: [github.com, git, operator git credential]
+    secrets: [github read credential (operator-provided, never in repo)]
+    validation: "commit pin matches manifest; file set present"
+    external: [github.com]
+
+  prerequisites:
+    purpose: host tools required to build the platform
+    classification: DETERMINISTIC_VALIDATION   # validation automated; INSTALL is MANUAL
+    source_of_truth: bootstrap/bootstrap.sh
+    mechanism: "bootstrap/bootstrap.sh (validates; does not install — install is operator-authorized MANUAL step)"
+    inputs: [macOS host, Docker Desktop running]
+    dependencies: [docker, git, jq, gh, helm 3.16.3, kubectl]
+    validation: "bootstrap exit 0"
+    known_manual: "installing missing tools is documented MANUAL (spec section 32 class 1)"
+
+  container_runtime:
+    purpose: Docker engine hosting the k3s container
+    classification: EXTERNAL_DEPENDENCY        # Docker Desktop is host software, not in repo
+    source_of_truth: host Docker Desktop (documented in contract, not reconstructable from repo)
+    mechanism: "precondition: engine reachable (bootstrap checks)"
+    validation: "docker info succeeds"
+    external: [Docker Desktop, macOS]
+
+  kubernetes:
+    purpose: single-node k3s cluster (A'' envelope 1.5 GiB / 2 cores)
+    classification: DETERMINISTIC
+    source_of_truth: platform/kubernetes/k3s/compose.yaml
+    mechanism: "docker compose -f platform/kubernetes/k3s/compose.yaml up -d"
+    inputs: [container_runtime]
+    dependencies: [rancher/k3s:v1.31.2-k3s1 image (Docker Hub), privileged mode (documented constraint)]
+    state_boundary: "k3s-data named volume = cluster STATE; recreating with 'down -v' yields an empty cluster (proven Phase 2)"
+    validation: "kubectl get nodes -> Ready"
+    evidence: "Phase 2 completion report: down -v -> up reconstruction test"
+
+  gitops:
+    purpose: Argo CD v2.13.3 managing platform-demo from Git
+    classification: DETERMINISTIC
+    source_of_truth: platform/argocd/values.yaml + platform/argocd/application-platform-demo.yaml
+    mechanism: "helm install argocd (pinned chart via values) + kubectl apply application manifest"
+    inputs: [kubernetes]
+    dependencies: [argoproj helm repo (external), ghcr.io/argoproj images (external), github.com (App source)]
+    secrets: [none in-cluster for platform-demo (public repo pull); operator git credential NOT stored in cluster]
+    validation: "kubectl -n argocd get app platform-demo -> Synced/Healthy"
+    evidence: "Phase 5A completion report"
+
+  platform_workload:
+    purpose: platform-demo application (deployable)
+    classification: DETERMINISTIC
+    source_of_truth: platform/helm/platform-demo/ (chart) + applications/platform-demo/ (image source)
+    mechanism: "Argo CD reconciles from Git (declarative; no direct kubectl apply for steady state)"
+    inputs: [gitops]
+    dependencies: [ghcr.io image availability, CI-built image tag]
+    validation: "deployment Ready; service exists; health endpoint"
+    evidence: "live cluster Synced/Healthy; CI build pipeline"
+
+  validation:
+    purpose: post-reconstruction deterministic checks
+    classification: DETERMINISTIC
+    source_of_truth: bootstrap/reconstruct.sh (this phase)
+    mechanism: "staged validation in reconstruct.sh; report to docs/15-reproducibility/reports/"
+    validation: "report final status PASS/WARN per stage"
+
+state_boundary:
+  reconstructed_from_source: [source, bootstrap, k3s container+config, helm charts, argo cd install+application, manifests, policies, scripts]
+  requires_restoration_or_operator: [cluster state inside k3s-data volume (unless accepted empty),
+                                     github credential, docker desktop allocation (host setting),
+                                     any future app data (none exists today)]
+  model: "infrastructure reconstruction + state restoration = full DR; this phase covers reconstruction ONLY"
+
+external_dependencies:
+  - {name: github.com, purpose: source + argo app source, required_during_reconstruction: true, auth: "operator git credential", version_sensitive: false, offline: "blocks everything"}
+  - {name: Docker Hub, purpose: rancher/k3s image, required: true, auth: none, version_sensitive: true, offline: "blocks kubernetes stage"}
+  - {name: ghcr.io, purpose: argo images + platform-demo image, required: true, auth: "public pull", version_sensitive: true, offline: "blocks gitops/platform stages"}
+  - {name: argoproj helm repo, purpose: argo cd chart, required: true, auth: none, version_sensitive: true, offline: "blocks gitops stage"}
+  - {name: Docker Desktop, purpose: engine + VM allocation, required: true, auth: none, version_sensitive: true, offline: "blocks everything (host software)"}
+  - {name: GitHub Actions, purpose: CI-built images, required: "platform-demo image rebuild", auth: none, version_sensitive: false, offline: "existing image usable"}
+
+host_assumptions:
+  portable: [helm charts, kubernetes manifests, argo application yaml, scripts logic]
+  macOS_specific: [bootstrap host checks (Darwin), resource commands]
+  docker_desktop_specific: [VM memory allocation (documented, operator-set), privileged k3s-in-docker behavior]
+  x86_64_specific: [envelope sizing measured on x86_64; arm64 untested]
+  NOT_portable_claims: "no Linux/cloud portability is claimed; AWS migration is a future phase"
+
+resource_envelope:
+  k3s_limit: "1.5 GiB / 2 cores (hard, authorized)"
+  k3s_observed: "~0.97-1.0 GiB steady"
+  platform_demo_limit: "128 MiB"
+  binding_constraint: "memory (documented Phase 6 lesson)"
