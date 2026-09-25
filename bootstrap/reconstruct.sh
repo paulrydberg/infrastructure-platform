@@ -353,6 +353,18 @@ YAML
   fi
 
   # Workload validation: declared state == deployed state (Git = Argo = K8s)
+  # DEFECT L4-3 (found 2026-09-25, run @ 339f077): the validator ran once,
+  # immediately after Argo reported Healthy, and read replicas=0/0 — a race
+  # between Argo's health assessment and Deployment status propagation.
+  # Correction: bounded wait for the deployment to report readyReplicas
+  # before comparing declared vs actual state (deterministic terminal-state
+  # assertion, not a point-in-time sample).
+  WVA_OK=0
+  for i in $(seq 1 24); do
+    RR=$(KUBECONFIG="$DISPOSABLE_KUBECONFIG" kubectl -n platform-demo get deploy platform-demo          -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    if [ "${RR:-0}" = "1" ]; then WVA_OK=1; break; fi
+    sleep 5
+  done
   WV=$(DISPOSABLE_KUBECONFIG_ARG="$DISPOSABLE_KUBECONFIG" python3 - <<'PYEOF' 2>/dev/null
 import json, subprocess, os
 kc = os.environ["DISPOSABLE_KUBECONFIG_ARG"]
@@ -386,7 +398,7 @@ PYEOF
   IMG_OK=$(echo "$WV" | grep '^image=' | cut -d= -f2)
   RO_OK=$(echo "$WV" | grep '^readOnlyRootFilesystem=' | cut -d= -f2)
   SVC_OK=$(echo "$WV" | grep '^service=' | cut -d= -f2)
-  if [ "$IMG_OK" = "platform-demo:0.1.0" ] && [ "$RO_OK" = "True" ] && [ "$SVC_OK" = "exists" ]; then
+  if [ "$WVA_OK" = "1" ] && [ "$IMG_OK" = "platform-demo:0.1.0" ] && [ "$RO_OK" = "True" ] && [ "$SVC_OK" = "exists" ]; then
     stage "disposable_workload_validate" "PASS" "Git=Argo=K8s: pinned image, securityContext per chart, svc present ($WV)"
   else
     stage "disposable_workload_validate" "FAIL" "declared-vs-actual mismatch: $WV"
