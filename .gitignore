@@ -61,3 +61,4 @@ backups/
 *.secret
 *_credentials*
 docs/15-reproducibility/reports/
+docs/15-reproducibility/periodic/

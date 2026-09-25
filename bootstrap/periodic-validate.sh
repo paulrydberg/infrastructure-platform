@@ -157,6 +157,20 @@ fi
 PREV=$(ls -t "$EVIDENCE_DIR"/validation-*.json 2>/dev/null | grep -v "$RUN_ID" | head -1)
 COMPARISON="no previous validation evidence"
 DRIFT_RESULT="UNKNOWN"
+# DEFECT L6-6: compare only like-for-like records — a validate-only machinery
+# test (2 s, no reconstruction) is not a baseline for a full reconstruction
+# run; flagging "duration REGRESSION" across classes is a false positive.
+# The like-for-like class is detected from the runner report stage set.
+if [ -n "$PREV" ]; then
+  # skip machinery-test baselines: their runner report contains the
+  # validation-only SKIP stage
+  PREV_REPORT=$(python3 -c "import json;print(json.load(open('$PREV')).get('runner_report',''))" 2>/dev/null)
+  if [ -n "$PREV_REPORT" ] && grep -q "RECONSTRUCT_EXECUTE != 1" "$PREV_REPORT" 2>/dev/null; then
+    COMPARISON="previous record was a validate-only machinery test — no like-for-like comparison yet"
+    DRIFT_RESULT="NO_BASELINE"
+    PREV=""
+  fi
+fi
 if [ -n "$PREV" ]; then
   COMPARISON=$(python3 - "$PREV" "$LATEST_REPORT" <<'PYEOF' 2>/dev/null || echo "comparison error"
 import json, sys
@@ -164,7 +178,8 @@ prev = json.load(open(sys.argv[1])); cur = json.load(open(sys.argv[2]))
 rows = []
 pc, cc = prev.get("source_commit"), cur.get("source_commit")
 rows.append(f"revision: {'changed' if pc != cc else 'same'} ({str(pc)[:8]} -> {str(cc)[:8]})")
-pp, cp = prev.get("overall_result"), cur.get("overall_result")
+pp = prev.get("overall_result") or prev.get("final_status")
+cp = cur.get("overall_result") or cur.get("final_status")
 rows.append(f"result: {pp} -> {cp}")
 pd, cd = prev.get("duration_seconds"), cur.get("duration_seconds")
 if isinstance(pd, int) and isinstance(cd, int):
