@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.infrastructure-platform.reproducible-validation</string>
+    <key>Comment</key>
+    <string>Level 6 periodic reproducibility validation — runs the deterministic
+        disposable reconstruction (bootstrap/periodic-validate.sh) and preserves
+        evidence. Resource-gated; BLOCKED is a valid outcome. If the Mac is
+        asleep at the scheduled time, launchd coalesces the missed window and
+        runs the job once on wake — the wrapper records that as a
+        scheduler_missed_window in the evidence (a missed window is never a
+        silent PASS). No new resident daemon: launchd is the host's existing
+        deterministic scheduler. Conservative cadence: twice weekly.</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/macmini/.hermes/projects/infrastructure-platform/bootstrap/periodic-validate.sh</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Weekday</key>
+            <integer>3</integer>
+            <key>Hour</key>
+            <integer>4</integer>
+            <key>Minute</key>
+            <integer>17</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>6</integer>
+            <key>Hour</key>
+            <integer>4</integer>
+            <key>Minute</key>
+            <integer>17</integer>
+        </dict>
+    </array>
+    <key>StandardOutPath</key>
+    <string>/Users/macmini/.hermes/projects/infrastructure-platform/docs/15-reproducibility/periodic/launchd-stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/macmini/.hermes/projects/infrastructure-platform/docs/15-reproducibility/periodic/launchd-stderr.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+    <!-- Exit-timeout: bounded execution — a hung run is killed and visible -->
+    <key>ExitTimeOut</key>
+    <integer>3600</integer>
+</dict>
+</plist>
