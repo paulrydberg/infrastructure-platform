@@ -226,15 +226,33 @@ else
   # Resource gate FIRST (resource safety > reconstruction ambition).
   # Memory is the binding constraint (Phase 6 lesson). Never create a second
   # cluster unless free memory clearly allows a second 1.5 GiB envelope.
+  # DEFECT L6-7 (found live during Level 6 validation runs, preserved): the
+  # original gate used a raw swap-USED threshold and BLOCKED at 76% free
+  # memory — conflating cold-page residency with pressure, the exact mistake
+  # docs/09-observability/resource-gate-principles.md codifies against.
+  # Corrected gate signals, per the project's own distinction chain:
+  #   PRIMARY:   macOS memory-pressure level (1 = NORMAL)
+  #   SECONDARY: swap ACTIVITY (pageins/pageouts delta over a 3s sample)
+  #   CONTEXT:   free % and swap used (recorded, advisory only)
   FREE_PCT=$(memory_pressure -Q 2>/dev/null | grep -o '[0-9]*' | tail -1)
   SWAP_USED=$(sysctl -n vm.swapusage 2>/dev/null | awk '{print $6}' | tr -d 'M')
+  PRESSURE_LEVEL=$(sysctl -n kern.memorystatus_vm_pressure_level 2>/dev/null || echo 1)
+  PI1=$(vm_stat 2>/dev/null | awk '/Pageins/{print $(NF)}' | tr -d '.')
+  PO1=$(vm_stat 2>/dev/null | awk '/Pageouts/{print $(NF)}' | tr -d '.')
+  sleep 3
+  PI2=$(vm_stat 2>/dev/null | awk '/Pageins/{print $(NF)}' | tr -d '.')
+  PO2=$(vm_stat 2>/dev/null | awk '/Pageouts/{print $(NF)}' | tr -d '.')
+  SWAP_DELTA=$(( ${PI2:-0} - ${PI1:-0} + ${PO2:-0} - ${PO1:-0} ))
   K3S_LIMIT_MIB=1536
-  echo "resource gate: free=${FREE_PCT}% swap_used=${SWAP_USED:-?}M required≈${K3S_LIMIT_MIB}MiB"
+  echo "resource gate: free=${FREE_PCT}% swap_used=${SWAP_USED:-?}M pressure_level=${PRESSURE_LEVEL} swap_activity_3s=${SWAP_DELTA} pages required≈${K3S_LIMIT_MIB}MiB"
   GATE_OK=$(python3 -c "
 free=$FREE_PCT
-swap=${SWAP_USED:-0}
-# gate: generous free memory AND swap not in active growth territory
-print('OK' if free >= 35 and swap < 1600 else 'BLOCKED')" 2>/dev/null || echo BLOCKED)
+pressure=$PRESSURE_LEVEL
+activity=$SWAP_DELTA
+# PRIMARY: OS pressure level (1=NORMAL). SECONDARY: swap activity at rest
+# should be ~0; a small delta is tolerated, active thrashing is not.
+# CONTEXT: generous free memory still required for a second 1.5GiB envelope.
+print('OK' if free >= 35 and pressure == 1 and activity < 200 else 'BLOCKED')" 2>/dev/null || echo BLOCKED)
   if [ "$GATE_OK" != "OK" ]; then
     stage "disposable_reconstruction" "SKIPPED" "resource gate BLOCKED (free=${FREE_PCT}% swap=${SWAP_USED}M) — protected fleet safety outranks reconstruction ambition"
     if emit_report "WARN" && report_validate "$REPORT" "WARN"; then
