@@ -242,7 +242,12 @@ else
   sleep 3
   PI2=$(vm_stat 2>/dev/null | awk '/Pageins/{print $(NF)}' | tr -d '.')
   PO2=$(vm_stat 2>/dev/null | awk '/Pageouts/{print $(NF)}' | tr -d '.')
-  SWAP_DELTA=$(( ${PI2:-0} - ${PI1:-0} + ${PO2:-0} - ${PO1:-0} ))
+  # DEFECT L6-8: combined pageins+pageouts delta misreads cold-page READBACK
+  # (pageins faulting previously swapped-out pages back in — e.g. 5118
+  # pages after a wake burst) as pressure. Thrashing under pressure shows as
+  # sustained PAGEOUTS (forced eviction); pageins of cold pages is normal.
+  # Activity signal = pageouts delta only.
+  SWAP_DELTA=$(( ${PO2:-0} - ${PO1:-0} ))
   K3S_LIMIT_MIB=1536
   echo "resource gate: free=${FREE_PCT}% swap_used=${SWAP_USED:-?}M pressure_level=${PRESSURE_LEVEL} swap_activity_3s=${SWAP_DELTA} pages required≈${K3S_LIMIT_MIB}MiB"
   GATE_OK=$(python3 -c "
