@@ -34,7 +34,7 @@
       "my-devops-project",
       "cloud-learning-project"
     ],
-    "rule": "naming convention only \u2014 repos created exclusively on justified engineering boundaries via ADR"
+    "rule": "naming convention only — repos created exclusively on justified engineering boundaries via ADR"
   },
   "roadmap_baseline": "Verbatim prompts (master spec Phases 0-19 + Amendment 1)",
   "github": {
@@ -42,10 +42,10 @@
     "protocol": "ssh",
     "verified": "2026-09-24"
   },
-  "phase": 6,
-  "phase_name": "Observability",
-  "status": "phase-8-level-6-demonstrated: periodically verified reconstruction (ADR-0007)",
-  "next_action": "Level 6 demonstrated. Deferred with conditions: Level 7 continuous validation, dependency automation, L5 DR (not applicable until project-owned state exists), AWS/IaC, observability, AI. See level6-completion-record.md.",
+  "phase": 17,
+  "phase_name": "Reproducibility",
+  "status": "level-6-mechanism-demonstrated: periodically verified reconstruction; longitudinal history accumulating",
+  "next_action": "Accumulate scheduled Level 6 history. Reassess Level 7 and dependency automation only after measurable entry criteria are satisfied; AWS/IaC, persistent observability, DR, and AI remain deferred. See docs/history/post-level6-audit.md.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {
