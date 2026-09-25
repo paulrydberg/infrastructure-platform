@@ -50,21 +50,46 @@ environment, and refusal to resize Docker to make experiments pass.
 
 **What has been demonstrated?** Phases 0–8: container foundation,
 k3s, Helm (install/upgrade/rollback/recovery), CI/CD with controlled
-failure evidence, GitOps with drift self-heal, full security program
-(baseline → remediation → policy → enforcement, live), reproducibility
-Level 3 and Level 4 (GitOps-layer reconstruction with failure testing).
+failure evidence, GitOps with drift self-heal, security scanning/policy/
+enforcement, and reproducibility Levels 3 and 4. The current
+reproducibility maturity is **Level 6 — periodically verified
+reconstruction, mechanism demonstrated with longitudinal history still
+accumulating**. The Level 4 reconstruction runner is reused by the
+host's existing launchd scheduler; each validation is resource-gated,
+disposable, GitOps-validated, evidence-authoritative, compared against
+like-for-like history, and torn down.
+
+The post-Level-6 independent audit found and fixed **AUD-1**, a stale
+runner-report inheritance defect that could have allowed an older report
+to influence a run that did not produce its own report. The periodic
+validation suite is now **22/22**, with **11/11** report-authority tests.
+The audit reconciled the Level-6 record to eight distinct defect
+identifiers (L6-2 through L6-9) plus AUD-1.
+
+Level 6 is deliberately qualified: the mechanism is demonstrated, but
+longitudinal confidence is not yet accumulated. At audit time, retained
+evidence covered six records on one day, including three full
+reconstructions.
 
 **What failures occurred?** All preserved and documented: scanner
-supply-chain incident (pinned + checksummed afterwards), KSV-0118
-root-cause experiment, merged-cell report extraction error, silent-PASS
-policy window, artifact-loss-on-blocking-gate, docker-cp symlink trap,
-TLS reachability issue, Level 4 defects L4-1..L4-5 and L4-FT-1..3
-(each: symptom → root cause → fix → re-validation).
+supply-chain incident, KSV-0118 root-cause experiment, merged-cell report
+extraction error, silent-PASS policy window, artifact-loss-on-blocking-
+gate, Docker-cp symlink trap, TLS reachability issue, Level 4 defects
+L4-1..L4-5 and L4-FT-1..3, Level 6 defects L6-2..L6-9, and audit defect
+AUD-1. Each material defect has a documented symptom → root cause → fix
+→ re-validation record.
 
-**What remains intentionally deferred?** AWS/IaC (ADR-0006: prove local
-reconstruction first), observability stack (memory constraint; no
-demonstrated need), dependency automation (reassess after base-image
-churn), state-restoration DR (no project state exists yet).
+**What remains intentionally deferred?** Level 7 continuous validation
+until sufficient Level-6 history exists; dependency automation until the
+periodic validation substrate has accumulated reliability evidence;
+AWS/IaC and local-to-cloud promotion; persistent observability; AI
+operations; and Level 5 disaster recovery, which is not applicable until
+the project owns meaningful persistent state. These are decision
+boundaries, not missing documentation.
+
+**What if the LLM is unavailable?** Nothing in the platform's
+build/rebuild/govern path requires it. Inference count across all
+reconstruction, validation, and enforcement runs: 0.
 
 **What if the LLM is unavailable?** Nothing in the platform's
 build/rebuild/govern path requires it. Inference count across all
