@@ -178,6 +178,19 @@ echo "== stage 5: disposable reconstruction =="
 if [ "$MODE_EXECUTE" != "1" ]; then
   stage "disposable_reconstruction" "SKIPPED" "RECONSTRUCT_EXECUTE != 1 (validation-only mode; Phase 2 down -v -> up evidence remains the executed-reconstruction evidence)"
 else
+  # Stale-disposable-state guard (failure mode observed 2026-09-25, run
+  # reconstruct-20260925T012926Z: a leftover disposable container from
+  # earlier debugging owned the container name and port, so compose up
+  # silently reused it and helm hit "cannot re-use a name" from the stale
+  # release). The disposable environment must start from nothing.
+  if docker ps -a --format '{{.Names}}' | grep -q '^reconstruct-k3s-disposable$'; then
+    docker rm -f reconstruct-k3s-disposable >/dev/null 2>&1
+    docker compose -p reconstruct-k3s-disposable down -v --timeout 30 >/dev/null 2>&1
+    stage "disposable_stale_guard" "PASS" "stale disposable container found and removed before start"
+  else
+    stage "disposable_stale_guard" "PASS" "no stale disposable state"
+  fi
+
   # Resource gate FIRST (resource safety > reconstruction ambition).
   # Memory is the binding constraint (Phase 6 lesson). Never create a second
   # cluster unless free memory clearly allows a second 1.5 GiB envelope.
