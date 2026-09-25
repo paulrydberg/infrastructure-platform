@@ -21,6 +21,15 @@
 set -u
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# DEFECT L4-2 (found 2026-09-25, run reconstruct-20260925T011942Z): helm is
+# installed in ~/tools/bin (checksum-verified Phase 3) which is NOT in the
+# default non-interactive PATH — the runner failed with "helm: command not
+# found" despite the tool being present and prerequisite-validated. Fix:
+# deterministic PATH augmentation here (the runner must be self-sufficient,
+# not dependent on the invoking shell's ambient PATH — same hidden-state
+# class as L4-1).
+export PATH="$HOME/tools/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 MANIFEST="$REPO_ROOT/reconstruction-manifest.yaml"
 REPORT_DIR="${RECONSTRUCT_REPORT_DIR:-$REPO_ROOT/docs/15-reproducibility/reports}"
 REPORT="$REPORT_DIR/reconstruct-$(date -u +%Y%m%dT%H%M%SZ).json"
@@ -262,14 +271,15 @@ YAML
   # manifest, platform-demo chart. External deps recorded in the report:
   # argo helm repo, quay.io/ghcr images, k3s image, docker.io image layer.
   ARGO_INSTALL_BEGIN=$(date -u +%s)
-  if helm repo add argo https://argoproj.github.io/argo-helm >/dev/null 2>&1 \
-     && helm repo update >/dev/null 2>&1 \
+  ARGO_ERR="$TMPDIR_DISPOSABLE/argo-install-error.log"
+  if helm repo add argo https://argoproj.github.io/argo-helm 2> "$ARGO_ERR" \
+     && helm repo update 2>> "$ARGO_ERR" \
      && helm install argocd argo/argo-cd --namespace argocd --create-namespace \
           --version 7.7.11 --values "$REPO_ROOT/platform/argocd/values.yaml" \
-          --kubeconfig "$DISPOSABLE_KUBECONFIG" >/dev/null 2>&1; then
+          --kubeconfig "$DISPOSABLE_KUBECONFIG" 2>> "$ARGO_ERR"; then
     stage "disposable_argo_install" "PASS" "argocd chart 7.7.11 (app v2.13.3) installed from declared values"
   else
-    stage "disposable_argo_install" "FAIL" "helm install argocd failed (see preserved report)"
+    stage "disposable_argo_install" "FAIL" "helm install failed: $(tail -1 "$ARGO_ERR" 2>/dev/null | head -c 200)"
     (cd "$TMPDIR_DISPOSABLE" && docker compose -p reconstruct-k3s-disposable down -v --timeout 30 >/dev/null 2>&1)
     rm -rf "$TMPDIR_DISPOSABLE"
     fail_exit

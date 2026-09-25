@@ -47,6 +47,7 @@ check "docker present"         command -v docker
 check "docker compose present" docker compose version
 check "jq present"             command -v jq
 check "gh CLI present"         command -v gh
+check "helm present"           bash -c 'command -v helm || test -x "$HOME/tools/bin/helm"'
 
 echo "-- docker engine reachable (shared host: read-only check) --"
 if docker info >/dev/null 2>&1; then
