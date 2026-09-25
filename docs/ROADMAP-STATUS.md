@@ -400,3 +400,26 @@ engineering foundation** — not Kubernetes. Deliverables:
   simulation; rollback = delete the single gate step. Security scanning
   ACTIVE, policy evaluator ACTIVE, policy enforcement ACTIVE, shadow
   semantics retained for rollback. No history rewritten.
+
+## Phase 8 — Reproducibility Level 2 -> 3 (COMPLETE 2026-09-25)
+Authorized Level 2->3 phase executed. reconstruction-manifest.yaml
+(manifest_version 1.0.0: components source/prerequisites/container_
+runtime/kubernetes/gitops/platform_workload/validation; honest
+DETERMINISTIC/EXTERNAL_DEPENDENCY/STATEFUL/MANUAL classification;
+external-dependency inventory; secret boundaries; state boundary —
+infrastructure reconstruction vs state restoration; host-assumption
+classes). bootstrap/reconstruct.sh: deterministic zero-inference
+runner (prereq validation reusing bootstrap.sh, source-pin check,
+manifest schema+order validation, live-state diff, resource-gated
+disposable-cluster mode, JSON reports preserved on failure). Executed
+evidence: disposable k3s start->Ready(~5s)->host-side kubectl Ready->
+teardown proof, 12/12 PASS @ c07a881 (level3-final-evidence.json);
+two intermediate integration defects honestly reported + root-caused +
+fixed (docker-cp symlink; nonstandard listen port EOF -> 16443:6443
+mapping + tls-san). Failure injection: manifest order violation ->
+FAIL+report preserved; unreachable cluster -> FAIL+preserved.
+Idempotence: read-only validation runs stable; Argo convergence =
+platform idempotence mechanism; destructive production test rejected
+by resource gate. Resource gate enforced before every disposable run
+(free>=35%, swap<1600M); protected fleet untouched post-run. CI and
+enforcement untouched. LEVEL 3 ACHIEVED; Level 4/AWS not begun.

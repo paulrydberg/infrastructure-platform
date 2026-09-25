@@ -28,7 +28,7 @@ and "Not applicable yet".
 | Terraform/OpenTofu + AWS | no cloud account exists | Not implemented | no | Phase 8 + account creation |
 | Dependency automation (Renovate/WUD) | none | Not implemented | no | Phases 1/10 |
 | Incident response | none (no incidents yet — accurate) | Not applicable yet | no | first real incident + postmortem |
-| Disaster recovery / reconstruction | reproducibility contract v1, manifest v1 (Level 0) | Design | yes (design honesty) | Phase 17–18 demonstrations |
+| Disaster recovery / reconstruction | reconstruction manifest v1.0.0 + deterministic runner + resource-gated disposable-cluster validation; Level 2 previously demonstrated, LEVEL 3 ACHIEVED (executed reconstruction evidence) | Implemented + verified | yes (level3-final-evidence.json + completion record) | Level 4 / DR demonstrations |
 | AI operations (controlled, deterministic-first) | architecture doc; host budget governance exists | Design | no | Phases 11–15 |
 
 ## Positioning rule (Amendment 2)
