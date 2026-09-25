@@ -44,8 +44,8 @@
   },
   "phase": 6,
   "phase_name": "Observability",
-  "status": "phase-8-level-4-verified; evidence-authority enforced; roadmap re-sequenced per ADR-0007",
-  "next_action": "Next authorization (pending): Level 6 periodic reproducibility validation (scheduled resource-gated disposable reconstruction + evidence retention + drift comparison). See ADR-0007 + docs/history/roadmap-architecture-diagnostic.md.",
+  "status": "phase-8-level-6-demonstrated: periodically verified reconstruction (ADR-0007)",
+  "next_action": "Level 6 demonstrated. Deferred with conditions: Level 7 continuous validation, dependency automation, L5 DR (not applicable until project-owned state exists), AWS/IaC, observability, AI. See level6-completion-record.md.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {

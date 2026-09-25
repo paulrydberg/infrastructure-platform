@@ -36,7 +36,7 @@ Docker-VM resource-negotiation decision, which requires a separate explicit OK).
 | 14 | AI Incident Response | 🔲 not started | |
 | 15 | Policy Engine | ✅ complete (exceeded scope) | schema-validated evaluator + enforcement (Phase 7C) |
 | 16 | Platform Engineering | 🔲 not started | Backstage evaluation |
-| 17 | Reproducibility | ✅ Level 4 demonstrated | manifest+runner+GitOps rebuild+failure tests (Phase 8) |
+| 17 | Reproducibility | ✅ Level 6 demonstrated | L4 rebuild + L6 periodic validation (Phase 8, ADR-0007) |
 | 18 | Continuous Reconstruction | 🔲 not started | |
 | 19 | Final Architecture | 🔲 not started | |
 
@@ -468,9 +468,13 @@ Independent audit verified the Level 4 evidence, defect history,
 hidden-state elimination, and failure semantics
 (docs/history/post-level4-audit.md). One follow-up defect recorded
 (report-writer failure is non-fatal; fix requires separate
-authorization). NEXT PHASE: DECISION PENDING. Report-authority defect L4-6 was
-remediated (aa4a6ac: evidence authority enforced, 11/11 tests).
-Roadmap re-sequenced by ADR-0007: next authorization = Level 6
-periodic reproducibility validation; dependency automation follows;
-AWS/observability/AI/DR remain deferred with reasons. Nothing
-implemented beyond the authorized fix.
+authorization). NEXT PHASE EXECUTED (per ADR-0007 sequencing, separately authorized):
+Level 6 periodically verified reconstruction is DEMONSTRATED
+(cc654db..ddb628a: launchd-scheduled deterministic wrapper, evidence
+contract, non-collapsing failure taxonomy, historical comparison,
+7 defects found+fixed via real scheduled runs incl. two resource-gate
+signal corrections; 21/21 wrapper tests + real scheduled PASS/BLOCKED/
+FAIL/PASS taxonomy demonstrated live). L5 remains NOT APPLICABLE (no
+project-owned state). L7, dependency automation, AWS, observability,
+AI: deliberately deferred (conditions in level6-completion-record.md
+and ADR-0007).

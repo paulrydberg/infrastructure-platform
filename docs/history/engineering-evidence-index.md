@@ -20,6 +20,11 @@ See the repository README (architecture, current maturity, links).
   reports/level4-final-evidence.json (clean path, 20/20 PASS),
   reports/level4-failure-tests-evidence.txt (failure injection + recovery 9/9)
 - Suite: bootstrap/level4-failure-tests.sh
+- Level 6 (periodic verification): docs/15-reproducibility/level6-completion-record.md,
+  wrapper bootstrap/periodic-validate.sh, scheduler plist + status checker
+  (bootstrap/periodic-status.sh), tests bootstrap/periodic-validate-tests.sh
+  (21/21), representative scheduled-run evidence committed from
+  docs/15-reproducibility/periodic/
 
 ## GitOps
 - platform/argocd/ (pinned values v2.13.3, Application manifest, README

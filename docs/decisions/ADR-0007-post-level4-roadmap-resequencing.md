@@ -94,3 +94,26 @@ A demonstrated operational problem the deterministic evidence cannot diagnose
 routine scheduled validation operating cleanly + a concrete cloud requirement
 (reconsiders AWS); a deterministic workflow hitting a genuine reasoning limit
 (reconsiders AI).
+
+---
+
+## Addendum — Implementation Outcome (2026-09-25, same day)
+
+Level 6 was separately authorized and implemented (`cc654db`..`ddb628a`).
+Result: **demonstrated**. Real scheduled runs exercised the full taxonomy
+live — PASS, two BLOCKED (resource gate), one FAIL (dirty-tree WARN), then
+PASS again — proving failure classes are distinguishable and a clean run
+follows failure. Seven defects were found and fixed, six of them only
+because validation ran on a schedule: a macOS-portability bug (no flock),
+env/classification bugs, a mode-honesty bug, comparison-semantics bugs, and
+two resource-gate signal corrections (raw swap-used threshold and
+pageins-inclusive activity both conflated residency/readback with pressure —
+the Phase 6 distinction chain has at least three failure modes). The gate
+now follows the project's own principles: pressure level primary, pageout
+activity secondary, free % context. Evidence retention and clean source
+pinning were reconciled by classifying periodic evidence as retained local
+runtime evidence (gitignored; representative records committed deliberately).
+
+Deviations from the ADR's assumptions: none material. Level 7, dependency
+automation, AWS, observability, and AI remain deferred under the conditions
+recorded above.
