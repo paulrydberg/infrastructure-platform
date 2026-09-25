@@ -246,6 +246,143 @@ YAML
     stage "disposable_kubeconfig" "WARN" "host-side kubeconfig validation inconclusive (in-container check passed)"
   fi
 
+
+  # ---- LEVEL 4: disposable GitOps reconstruction (ADR-0006 follow-through) ----
+  # All state comes from the repository: pinned chart version (7.7.11), pinned
+  # values (platform/argocd/values.yaml), source-controlled Application
+  # manifest, platform-demo chart. External deps recorded in the report:
+  # argo helm repo, quay.io/ghcr images, k3s image, docker.io image layer.
+  ARGO_INSTALL_BEGIN=$(date -u +%s)
+  if helm repo add argo https://argoproj.github.io/argo-helm >/dev/null 2>&1 \
+     && helm repo update >/dev/null 2>&1 \
+     && helm install argocd argo/argo-cd --namespace argocd --create-namespace \
+          --version 7.7.11 --values "$REPO_ROOT/platform/argocd/values.yaml" \
+          --kubeconfig "$DISPOSABLE_KUBECONFIG" >/dev/null 2>&1; then
+    stage "disposable_argo_install" "PASS" "argocd chart 7.7.11 (app v2.13.3) installed from declared values"
+  else
+    stage "disposable_argo_install" "FAIL" "helm install argocd failed (see preserved report)"
+    (cd "$TMPDIR_DISPOSABLE" && docker compose -p reconstruct-k3s-disposable down -v --timeout 30 >/dev/null 2>&1)
+    rm -rf "$TMPDIR_DISPOSABLE"
+    fail_exit
+  fi
+
+  # Argo readiness (bounded poll on the core deployments)
+  ARGO_READY=0
+  for i in $(seq 1 48); do
+    sleep 5
+    A=$(KUBECONFIG="$DISPOSABLE_KUBECONFIG" kubectl -n argocd get deploy \
+        argocd-repo-server -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    S=$(KUBECONFIG="$DISPOSABLE_KUBECONFIG" kubectl -n argocd get deploy \
+        argocd-server -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    if [ "${A:-0}" = "1" ] && [ "${S:-0}" = "1" ]; then ARGO_READY=1; break; fi
+  done
+  ARGO_INSTALL_SECS=$(( $(date -u +%s) - ARGO_INSTALL_BEGIN ))
+  if [ "$ARGO_READY" = "1" ]; then
+    stage "disposable_argo_ready" "PASS" "argocd-server + repo-server Ready (install->ready ~${ARGO_INSTALL_SECS}s)"
+  else
+    stage "disposable_argo_ready" "FAIL" "argocd core deployments not Ready in 240s"
+    (cd "$TMPDIR_DISPOSABLE" && docker compose -p reconstruct-k3s-disposable down -v --timeout 30 >/dev/null 2>&1)
+    rm -rf "$TMPDIR_DISPOSABLE"
+    fail_exit
+  fi
+
+  # platform-demo image import into the DISPOSABLE cluster containerd
+  # (documented Phase 3 mechanism: docker save | ctr images import; the image
+  # itself is built by the pinned Dockerfile from source - no registry pull).
+  if docker save platform-demo:0.1.0 | docker exec -i reconstruct-k3s-disposable \
+       ctr -n k8s.io images import - >/dev/null 2>&1; then
+    stage "disposable_image_import" "PASS" "platform-demo:0.1.0 imported into disposable containerd (pinned tag)"
+  else
+    stage "disposable_image_import" "FAIL" "ctr import failed"
+    (cd "$TMPDIR_DISPOSABLE" && docker compose -p reconstruct-k3s-disposable down -v --timeout 30 >/dev/null 2>&1)
+    rm -rf "$TMPDIR_DISPOSABLE"
+    fail_exit
+  fi
+
+  # GitOps seed: apply the source-controlled Application manifest.
+  # Argo repo-server clones the PUBLIC GitHub repo itself; no credentials
+  # required. The disposable Argo reads the intended revision (main).
+  if KUBECONFIG="$DISPOSABLE_KUBECONFIG" kubectl apply -f \
+       "$REPO_ROOT/platform/argocd/application-platform-demo.yaml" >/dev/null 2>&1; then
+    stage "disposable_app_apply" "PASS" "Application platform-demo applied from declared manifest"
+  else
+    stage "disposable_app_apply" "FAIL" "kubectl apply Application failed"
+    (cd "$TMPDIR_DISPOSABLE" && docker compose -p reconstruct-k3s-disposable down -v --timeout 30 >/dev/null 2>&1)
+    rm -rf "$TMPDIR_DISPOSABLE"
+    fail_exit
+  fi
+
+  # GitOps convergence: wait for Synced + Healthy (the core Level 4 assertion)
+  SYNC_OK=0
+  for i in $(seq 1 60); do
+    sleep 5
+    SS=$(KUBECONFIG="$DISPOSABLE_KUBECONFIG" kubectl -n argocd get app platform-demo \
+         -o jsonpath='{.status.sync.status}' 2>/dev/null)
+    HS=$(KUBECONFIG="$DISPOSABLE_KUBECONFIG" kubectl -n argocd get app platform-demo \
+         -o jsonpath='{.status.health.status}' 2>/dev/null)
+    if [ "$SS" = "Synced" ] && [ "$HS" = "Healthy" ]; then SYNC_OK=1; break; fi
+  done
+  if [ "$SYNC_OK" = "1" ]; then
+    SYNC_REV=$(KUBECONFIG="$DISPOSABLE_KUBECONFIG" kubectl -n argocd get app platform-demo \
+        -o jsonpath='{.status.sync.revision}' 2>/dev/null)
+    stage "disposable_gitops_sync" "PASS" "Argo: platform-demo Synced+Healthy (revision ${SYNC_REV:-unknown})"
+  else
+    stage "disposable_gitops_sync" "FAIL" "not Synced+Healthy in 300s (see preserved report)"
+    (cd "$TMPDIR_DISPOSABLE" && docker compose -p reconstruct-k3s-disposable down -v --timeout 30 >/dev/null 2>&1)
+    rm -rf "$TMPDIR_DISPOSABLE"
+    fail_exit
+  fi
+
+  # Workload validation: declared state == deployed state (Git = Argo = K8s)
+  WV=$(DISPOSABLE_KUBECONFIG_ARG="$DISPOSABLE_KUBECONFIG" python3 - <<'PYEOF' 2>/dev/null
+import json, subprocess, os
+kc = os.environ["DISPOSABLE_KUBECONFIG_ARG"]
+def q(path):
+    r = subprocess.run(["kubectl","-n","platform-demo","get",path,"-o","json"],
+                       capture_output=True, text=True,
+                       env={**os.environ, "KUBECONFIG": kc})
+    return json.loads(r.stdout) if r.returncode == 0 else None
+dep = q("deploy platform-demo") or {}
+pod = q("pod -l app.kubernetes.io/name=platform-demo") or {}
+svc = q("svc platform-demo")
+status = dep.get("status", {})
+cs = ((dep.get("spec", {}).get("template", {}).get("spec", {}).get("containers")) or [{}])[0]
+sc = cs.get("securityContext", {})
+pod_ready = sum(1 for i in pod.get("items", []) if all(c.get("ready") for c in i.get("status", {}).get("containerStatuses", [])))
+rows = [
+    ("replicas", f"{status.get('readyReplicas',0)}/{status.get('replicas',0)}"),
+    ("image", cs.get("image", "")),
+    ("service", "exists" if svc else "MISSING"),
+    ("pod_ready", str(pod_ready)),
+    ("readOnlyRootFilesystem", str(sc.get("readOnlyRootFilesystem"))),
+    ("runAsNonRoot", str(sc.get("runAsNonRoot"))),
+    ("allowPrivilegeEscalation", str(sc.get("allowPrivilegeEscalation"))),
+    ("resources", "set" if cs.get("resources") else "MISSING"),
+    ("probes", "set" if (cs.get("readinessProbe") and cs.get("livenessProbe")) else "MISSING"),
+]
+for k, v in rows:
+    print(f"{k}={v}")
+PYEOF
+)
+  IMG_OK=$(echo "$WV" | grep '^image=' | cut -d= -f2)
+  RO_OK=$(echo "$WV" | grep '^readOnlyRootFilesystem=' | cut -d= -f2)
+  SVC_OK=$(echo "$WV" | grep '^service=' | cut -d= -f2)
+  if [ "$IMG_OK" = "platform-demo:0.1.0" ] && [ "$RO_OK" = "True" ] && [ "$SVC_OK" = "exists" ]; then
+    stage "disposable_workload_validate" "PASS" "Git=Argo=K8s: pinned image, securityContext per chart, svc present ($WV)"
+  else
+    stage "disposable_workload_validate" "FAIL" "declared-vs-actual mismatch: $WV"
+    (cd "$TMPDIR_DISPOSABLE" && docker compose -p reconstruct-k3s-disposable down -v --timeout 30 >/dev/null 2>&1)
+    rm -rf "$TMPDIR_DISPOSABLE"
+    fail_exit
+  fi
+
+  # GitOps-layer teardown (Application, helm release, namespaces) before the
+  # whole-environment teardown below.
+  KUBECONFIG="$DISPOSABLE_KUBECONFIG" kubectl -n argocd delete app platform-demo --wait=false >/dev/null 2>&1
+  helm uninstall argocd -n argocd --kubeconfig "$DISPOSABLE_KUBECONFIG" >/dev/null 2>&1
+  KUBECONFIG="$DISPOSABLE_KUBECONFIG" kubectl delete ns argocd platform-demo --wait=false >/dev/null 2>&1
+  stage "disposable_gitops_teardown" "PASS" "GitOps layer removed (app, helm release, namespaces)"
+
   # Destruction proof: the disposable environment is torn down completely
   (cd "$TMPDIR_DISPOSABLE" && docker compose -p reconstruct-k3s-disposable down -v --timeout 30 >/dev/null 2>&1)
   rm -rf "$TMPDIR_DISPOSABLE"
