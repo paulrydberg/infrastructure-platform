@@ -39,6 +39,19 @@ if docker ps -a --format '{{.Names}}' | grep -q '^reconstruct-k3s-disposable$'; 
   docker compose -p reconstruct-k3s-disposable down -v --timeout 30 >/dev/null 2>&1
   sleep 3
 fi
+# DEFECT L4-FT-3: compose up raced Docker port release after teardown of a
+# previous disposable run (container never created; suite aborted). Wait for
+# the port to be actually free, then retry compose up once if needed.
+for i in $(seq 1 12); do
+  lsof -i :16443 >/dev/null 2>&1 || break
+  sleep 5
+done
+if ! (cd /tmp/l4ft && docker compose -p reconstruct-k3s-disposable up -d --quiet-pull >/dev/null 2>&1); then
+  sleep 10
+  docker rm -f reconstruct-k3s-disposable >/dev/null 2>&1
+  (cd /tmp/l4ft && docker compose -p reconstruct-k3s-disposable up -d --quiet-pull >/dev/null 2>&1) || {
+    echo "SETUP FAILED: compose up (with retry) could not start the disposable cluster"; exit 9; }
+fi
 # bounded 300s readiness poll (observed: k3s can take >120s when Docker is
 # still releasing the previous disposable run's port)
 # DEFECT L4-FT-2: k3s may transiently serve a kubeconfig/cert pair that
