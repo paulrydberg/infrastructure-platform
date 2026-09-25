@@ -1,6 +1,6 @@
 # Level 6 Completion Record — Periodically Verified Reconstruction
 
-**Status: LEVEL 6 DEMONSTRATED** · implementation `cc654db` → `ddb628a` ·
+**Status: LEVEL 6 DEMONSTRATED — mechanism verified; longitudinal history still accumulating** · implementation `cc654db` → `ddb628a` ·
 real scheduled-run evidence committed under `docs/15-reproducibility/periodic/`
 (retained locally; representative records referenced below) · LLM inference 0 ·
 protected fleet untouched.
@@ -85,8 +85,7 @@ failure_classification · overall_result · llm_inference_required`
 | L6-8 | still BLOCKED: cold-page readback counted | pageins+pageouts summed | pageouts-only activity signal | `fdbde21` |
 | L6-9 | every scheduled run dirtied the tree → next run's clean-pin WARN | evidence written inside repo, untracked | evidence dir gitignored (retained local evidence) | `ddb628a` |
 
-Six of seven defects were invisible until validation actually ran on a
-schedule — the strongest argument for Level 6 itself.
+Eight distinct Level-6 defect identifiers were ultimately reconciled (L6-2 through L6-9). The post-Level-6 audit also found AUD-1, a stale runner-report inheritance defect that could have allowed an old report to influence a run that did not produce its own report. AUD-1 was fixed and regression-tested. The periodic-validation suite is now 22/22; report-authority tests remain 11/11. These defects are part of the engineering record rather than being normalized away.
 
 ## Historical Comparison & Drift Semantics
 
@@ -97,9 +96,15 @@ observed state** (image, security properties, GitOps convergence). A new Git
 commit is *expected change*, never drift; `NO_UNEXPECTED_DRIFT` vs
 `DURATION_REGRESSION` are the current deterministic drift outcomes.
 
+## Post-Level-6 Audit Qualification
+
+The independent post-Level-6 audit validated the mechanism but qualified the maturity claim: the retained evidence at audit time covered six records on one day, including three full reconstructions. This is enough to demonstrate the periodic-validation mechanism, but not enough to claim multi-week longitudinal reliability. The scheduler, evidence authority, protected-fleet boundary, resource model, and failure/recovery semantics were independently audited. See `docs/history/post-level6-audit.md`.
+
+Known limitations remain: evidence is retained locally, live validation stages use a declared local production kubeconfig, and historical comparison is heuristic rather than a statistical baseline. These are documented limitations, not hidden dependencies.
+
 ## Test Results
 
-- `bootstrap/periodic-validate-tests.sh`: **21/21 PASS** (T1 happy path
+- `bootstrap/periodic-validate-tests.sh`: **22/22 PASS** (T1 happy path
   end-to-end; T2/T3 reconstruction & GitOps failure → FAIL; T4 evidence →
   EVIDENCE_ERROR; T5 gate → BLOCKED incl. PASS-cannot-override; T6 scheduler
   visibility; T7 teardown residue never silent; T8 concurrency skip; T9
@@ -131,9 +136,9 @@ hardening); comparison is heuristic (no statistical baseline, by design).
 
 ## Future Boundaries
 
-- **Level 7** requires: the periodic model operating reliably across weeks,
-  demonstrated evidence retention/drift value, and a concrete need for
-  event-driven validation.
+- **Level 7** requires: the periodic model operating reliably across weeks, measurable entry criteria
+  including failure/recovery history, stable comparison, missed-window detection,
+  and a host-event evidence-retention check. Level 7 is not currently authorized.
 - **Dependency automation** integrates cleanly: dependency PR → scheduled/
   disposable validation → evidence → merge gate (explicitly NOT authorized).
 - **L5 DR** becomes applicable only with meaningful project-owned persistent

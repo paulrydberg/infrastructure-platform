@@ -25,8 +25,9 @@ See the repository README (architecture, current maturity, links).
 - Level 6 (periodic verification): docs/15-reproducibility/level6-completion-record.md,
   wrapper bootstrap/periodic-validate.sh, scheduler plist + status checker
   (bootstrap/periodic-status.sh), tests bootstrap/periodic-validate-tests.sh
-  (21/21), representative scheduled-run evidence committed from
-  docs/15-reproducibility/periodic/
+  (**22/22** after post-Level-6 audit), representative scheduled-run evidence
+  committed from docs/15-reproducibility/periodic/. Level 6 mechanism is demonstrated;
+  longitudinal history is intentionally still accumulating.
 
 ## GitOps
 - platform/argocd/ (pinned values v2.13.3, Application manifest, README
@@ -56,12 +57,15 @@ See the repository README (architecture, current maturity, links).
 - Scanner incident + policy silent-PASS window: docs/07-security/
 
 ## Audits
-- docs/history/post-level4-audit.md (independent post-Level-4 audit +
-  next-phase decision gate)
+- docs/history/post-level4-audit.md (independent post-Level-4 audit + next-phase decision gate)
+- docs/history/post-level6-audit.md (independent Level-6 mechanism audit; AUD-1 found+fixed;
+  eight Level-6 defect identifiers reconciled; longitudinal boundary established)
 
 ## ADRs
-- docs/decisions/ (ADR-0001..0006 — foundation, naming, portfolio,
-  enforcement deferral, policy simulation, post-Level-3 direction)
+- docs/decisions/ (ADR-0001..0007 — foundation, naming, portfolio, enforcement strategy,
+  policy/reproducibility decisions, post-Level-4 roadmap re-sequencing)
+- ADR-0007 records the decision to implement periodic reproducibility validation before
+  Level 7, dependency automation, AWS, observability, or AI.
 
 ## Roadmap
 - docs/ROADMAP-STATUS.md (complete/active/next-candidate/deferred

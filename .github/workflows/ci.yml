@@ -279,18 +279,36 @@ jobs:
           # on this branch that produced security-evidence. First run (or
           # retention gap) -> no file -> evaluator records MISSING HISTORY
           # as UNKNOWN for R2 (never "no vulnerabilities").
+          # DEFECT CI-R2-1 (found by PR #4, 2026-09-25): for pull_request
+          # runs GITHUB_REF_NAME is "<PR>/merge", a synthetic ref that has no
+          # prior runs — so this lookup ALWAYS failed on PRs and the security
+          # gate returned R2=UNKNOWN (UNKNOWN blocks merge), blocking every
+          # PR regardless of content. Correction: fall back to the PR's BASE
+          # branch (github.base_ref) when the PR ref has no history. R2
+          # semantics are unchanged: the baseline is still the last
+          # successful run's real scan; missing history is still recorded as
+          # UNKNOWN and NEVER fabricated as "no vulnerabilities". No policy
+          # rule, threshold, exception, or enforcement behavior is altered.
           PREV_RUN_ID=$(gh run list --branch "$GITHUB_REF_NAME" \
             --status success --limit 10 --json databaseId,headSha \
             --jq '[.[] | select(.headSha != env.GITHUB_SHA)][0].databaseId // ""')
+          BASELINE_BRANCH="$GITHUB_REF_NAME"
+          if [ -z "$PREV_RUN_ID" ] && [ -n "${github_base_ref:-}" ]; then
+            BASELINE_BRANCH="$github_base_ref"
+            PREV_RUN_ID=$(gh run list --branch "$BASELINE_BRANCH" \
+              --status success --limit 10 --json databaseId,headSha \
+              --jq '[.[] | select(.headSha != env.GITHUB_SHA)][0].databaseId // ""')
+          fi
           if [ -n "$PREV_RUN_ID" ]; then
             gh run download "$PREV_RUN_ID" -n security-evidence -D /tmp/prev-evidence || true
             [ -f /tmp/prev-evidence/trivy-report.json ] && \
               cp /tmp/prev-evidence/trivy-report.json /tmp/previous-trivy-report.json || true
           fi
-          [ -f /tmp/previous-trivy-report.json ] && echo "previous scan: run $PREV_RUN_ID" \
+          [ -f /tmp/previous-trivy-report.json ] && echo "previous scan: run $PREV_RUN_ID (branch: $BASELINE_BRANCH)" \
             || echo "previous scan: UNAVAILABLE (R2=UNKNOWN this cycle)"
         env:
           GH_TOKEN: ${{ github.token }}
+          github_base_ref: ${{ github.base_ref }}
 
       - name: policy evaluation (R1/R2/R3/R4 — verdict artifact; decision step below)
         run: |

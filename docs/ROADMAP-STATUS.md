@@ -5,13 +5,12 @@
 > every session or work item. The master spec's §79 defines Phases 0–19;
 > Amendment 1 adds the GitHub/portfolio workstream.
 
-**Last updated:** 2026-09-24 (Phase 1 complete; released v0.1.0)
-**Current phase:** Phase 1 — Local Container Foundation ✅ COMPLETE
-**Current status:** Repo live (public, protected, security-verified);
-platform-demo 0.1.0 tested incl. destroy→rebuild reconstruction; CI green;
-v0.1.0 released. Stopped at Phase 1→2 authorization boundary.
-**Next gate:** Paul's authorization for Phase 2 — Kubernetes (incl. the
-Docker-VM resource-negotiation decision, which requires a separate explicit OK).
+**Last updated:** 2026-09-25 (post-Level-6 independent audit)
+**Current workstream:** Level 6 — Periodically Verified Reconstruction ✅ MECHANISM DEMONSTRATED
+**Current status:** periodic validation is operating through the host's existing launchd scheduler; the mechanism has been independently audited, AUD-1 was fixed, and longitudinal history is now intentionally accumulating.
+**Next gate:** no new capability implementation. Reassess after sufficient scheduled history; Level 7 and dependency automation require separate authorization.
+
+> **Important:** roadmap phase numbers and reproducibility maturity levels are separate axes. The original roadmap's Phase 8 is AWS; later work re-sequenced reproducibility into the current Phase 8 workstream. Do not equate Phase 8 with Maturity Level 8.
 
 ---
 
@@ -25,20 +24,20 @@ Docker-VM resource-negotiation decision, which requires a separate explicit OK).
 | 3 | Helm | ✅ complete | helm v3.16.3 (checksum-verified); platform-demo chart lint/render/dry-run green; install+upgrade+rollback+bad-image-recovery+reconstruction demonstrated; envelope respected (k3s 489 MiB max); stopped at Phase 3→4 gate |
 | 4 | CI/CD | ✅ complete | 2-job pipeline (validate+build) w/ pinned SHAs, checksum-gated tools, chart/image consistency, kubeconform; both controlled failure modes demonstrated (PR #2); protection API-verified; stopped at Phase 4→5 gate |
 | 5 | GitOps | ✅ Phase 5A complete | Argo CD v2.13.3 measured ~209 MB pod memory; control loop + drift self-heal + failure/recovery demonstrated; staged teardown AND permanent residency both verified within 1.5 GiB envelope; stopped at Phase 5 boundary |
-| 6 | Observability | 🔄 capacity analysis complete (READ-ONLY) | Tier A (metrics-server) FITS envelope; Tier B tight; Tier B+ requires VM resize or staging; nothing installed; awaiting Paul's architecture choice |
+| 6 | Observability | 🔬 experiment closed / no retained stack | Tier-A metrics-server functionally validated then rolled back after conservative resource gate; resource-gate lesson documented; persistent observability deferred |
 | 7 | Security | ✅ complete (exceeded scope) | Trivy+Gitleaks+SBOM+image policy+enforcement LIVE (Phases 7A-7C) |
-| 8 | AWS | 🔲 not started | Terraform/OpenTofu |
+| 8 | AWS | 🔲 deferred | No demonstrated requirement; revisit only after evidence changes the decision |
 | 9 | Local-to-Cloud Promotion | 🔲 not started | |
-| 10 | Dependency Automation | 🔲 not started | Renovate |
-| 11 | AI Maintenance Engine | 🔲 not started | AI stays optional |
-| 12 | AI Dependency Migration | 🔲 not started | |
-| 13 | AI Container Updates | 🔲 not started | WUD → policy → AI → PR |
-| 14 | AI Incident Response | 🔲 not started | |
+| 10 | Dependency Automation | 🔲 deferred | Architecturally justified as a future consumer of the reproducibility machinery; not currently authorized |
+| 11 | AI Maintenance Engine | 🔲 deferred | Deterministic boundary not reached; LLM inference remains 0 |
+| 12 | AI Dependency Migration | 🔲 deferred | Requires separately justified AI boundary |
+| 13 | AI Container Updates | 🔲 deferred | Requires dependency automation and separately justified AI boundary |
+| 14 | AI Incident Response | 🔲 deferred | No demonstrated need; deterministic incident boundary not reached |
 | 15 | Policy Engine | ✅ complete (exceeded scope) | schema-validated evaluator + enforcement (Phase 7C) |
-| 16 | Platform Engineering | 🔲 not started | Backstage evaluation |
-| 17 | Reproducibility | ✅ Level 6 demonstrated | L4 rebuild + L6 periodic validation (Phase 8, ADR-0007) |
-| 18 | Continuous Reconstruction | 🔲 not started | |
-| 19 | Final Architecture | 🔲 not started | |
+| 16 | Platform Engineering | 🔲 deferred | Backstage not justified while the core reconstruction/validation system is still accumulating evidence |
+| 17 | Reproducibility | ✅ Level 6 mechanism demonstrated | L3/L4 reconstruction + launchd-scheduled L6 validation; post-Level-6 audit qualified longitudinal confidence as not yet accumulated |
+| 18 | Continuous Reconstruction | 🔲 deferred | Level 7 entry criteria defined; wait for longitudinal Level-6 history before implementation |
+| 19 | Final Architecture | 🔲 ongoing | Architecture continues to be refined from demonstrated evidence; final architecture claim remains future |
 
 Legend: 🔲 not started · 🔄 in progress · ✅ complete · ⏸️ blocked · ❌ failed/rolled back
 
