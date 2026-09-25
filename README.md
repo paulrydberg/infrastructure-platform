@@ -43,25 +43,27 @@ baselines are measured and documented in
 
 | Capability | Status |
 |-----------|--------|
-| Phase 0 — Discovery, architecture baseline, threat model, reproducibility contract | ✅ Implemented (2026-09-24) |
-| Repository + documentation foundation | ✅ Implemented |
-| Phase 1 — Local container foundation | ✅ Implemented (v0.1.0) |
-| Phase 2 — Kubernetes (k3s, 1.5 GiB envelope) | ✅ Implemented — fundamentals, drift self-heal, Level 2 reconstruction demonstrated |
-| Phase 3 — Helm packaging | ✅ Implemented — lint/render/install/upgrade/rollback/reconstruction validated |
-| Phase 4 — CI/CD (GitHub Actions) | ✅ Implemented — deterministic validate+build pipeline, failure modes demonstrated |
-| Phase 5A — GitOps (Argo CD, minimal footprint) | ✅ Implemented — control loop, drift self-heal, failure/recovery demonstrated; measured ~209 MB |
-| Phase 7B — Security triage & remediation | 🧪 CRITICALs remediated (base bump, verified by rescan), KSV-0118 root-caused & fixed via pod-level securityContext, full finding dispositions; enforcement still deferred |
-| Phase 7A — Security (CI evidence) | 🔎 Trivy + gitleaks + SPDX SBOM in CI, evidence mode; policy enforcement is a future gate |
-| Phase 6 — Observability | 📊 Analysis + Tier-A metrics-server experiment complete — functionally validated, closed on a host swap-pressure gate (rolled back); not a persistent capability |
-| Security policy enforcement (deterministic CI gate) | ✅ Active — Phase 7C: FAIL/UNKNOWN block CI (artifact-preserving), WARN/EXCEPTION non-blocking; rollback = single step |
-| Registry/signing/provenance (digest-pinned deploys) | 📋 Deferred (requires registry decision; SBOM currently records OCI config digest only) |
-| AWS (Terraform/OpenTofu, VPC/IAM/ECR/EKS) | 📋 Planned (Phase 8+) |
-| Dependency automation (Renovate, WUD) | 📋 Planned (WUD deferred pending registry; Renovate Phase 10) |
-| AI operations (optional, resource-governed, event-driven) | 📋 Planned (Phases 11–15) |
-| Reproducibility/DR demonstrations | 📋 Planned (Phases 17–18) |
+| Phase 0 — Discovery and architecture baseline | ✅ Complete |
+| Phase 1 — Local container foundation | ✅ Complete — v0.1.0 |
+| Phase 2 — Kubernetes | ✅ Complete — k3s v1.31.2, 1.5 GiB envelope, Level 2 reconstruction |
+| Phase 3 — Helm | ✅ Complete — install/upgrade/rollback/reconstruction validated |
+| Phase 4 — CI/CD | ✅ Complete — deterministic GitHub Actions validation/build pipeline |
+| Phase 5A — GitOps | ✅ Complete — Argo CD control loop, drift self-heal, failure/recovery |
+| Phase 6 — Observability | 🔬 Capacity analysis + Tier-A metrics-server experiment completed; rolled back after a conservative resource gate; no persistent observability stack retained |
+| Phase 7 — Security | ✅ Complete — CI scanning, SBOM, deterministic policy evaluation and enforcement |
+| Phase 8 / Maturity Level 3 | ✅ Complete — deterministic platform reconstruction |
+| Phase 8 / Maturity Level 4 | ✅ Complete — GitOps-layer reconstruction with failure injection and recovery |
+| Phase 8 / Maturity Level 6 | ✅ Demonstrated — periodic resource-gated reconstruction validation; longitudinal history still accumulating |
+| Phase 8 / Level 5 DR | ⏸️ Not applicable yet — no meaningful project-owned persistent state exists |
+| Level 7 — Continuous reconstruction validation | 📋 Deferred — requires longitudinal Level 6 history and additional entry criteria |
+| Dependency automation | 📋 Deferred — architecturally justified as a future consumer of the validation machinery; not currently authorized |
+| AWS / Terraform/OpenTofu / local-to-cloud promotion | 📋 Deferred — no current demonstrated requirement |
+| Persistent observability stack | 📋 Deferred — no demonstrated diagnostic need and memory remains the binding constraint |
+| AI operations | 📋 Deferred — deterministic boundaries have not yet required LLM inference |
 
-The authoritative, continuously updated version of this table lives in
-[`docs/career-evidence/capability-matrix.md`](docs/career-evidence/capability-matrix.md).
+The roadmap's numbered phases and reproducibility maturity levels are **separate axes**. Phase 8 in the original roadmap is AWS; the current workstream also uses Phase 8 for the later reproducibility program because the roadmap evolved. See [docs/ROADMAP-STATUS.md](docs/ROADMAP-STATUS.md) and [docs/15-reproducibility/](docs/15-reproducibility/).
+
+The authoritative capability matrix is [docs/career-evidence/capability-matrix.md](docs/career-evidence/capability-matrix.md).
 
 ## Documentation map
 
@@ -103,16 +105,29 @@ infrastructure-platform/
 
 ## Reproducibility
 
-Demonstrated reconstruction maturity: **Level 6** (periodically verified; L4 GitOps-layer rebuild + scheduled resource-gated validation) — GitOps-layer reconstruction: disposable k3s -> Argo CD from declared source -> Application reconciliation to Synced/Healthy at the pinned commit -> workload validation -> teardown, with failure injection + recovery (record: docs/15-reproducibility/level4-completion-record.md). Prior demonstrated: the deployed platform
-(source → bootstrap → container runtime → k3s → Helm → workload) has been
-destroyed and reconstructed from Git with no undocumented manual steps
-(Phase 2/3 evidence; application-level reconstruction additionally shown in
-Phase 1). Full-environment reconstruction — including coexisting host
-services outside this project — is **not yet demonstrated** (that is the
-Level 0→7 journey's remaining work, targeted in Phases 17–18). Long-term
-target: Level 7 (continuously validated reconstruction) — claimed only when
-demonstrated. The [reconstruction manifest](docs/15-reproducibility/reconstruction-manifest.md)
-lists every component, its source of truth, and its restoration mechanism.
+Current demonstrated maturity: **Level 6 — periodically verified reconstruction (mechanism demonstrated; longitudinal history still accumulating).**
+
+The project has demonstrated:
+
+- **Level 1:** application/container destroy → rebuild from source.
+- **Level 2:** Kubernetes reconstruction.
+- **Level 3:** deterministic platform reconstruction.
+- **Level 4:** GitOps-layer reconstruction from declared source through Argo CD to Synced/Healthy, with failure injection, recovery, evidence generation, validation, and teardown.
+- **Level 6:** the Level 4 machinery now runs through the host's existing launchd scheduler, with resource gating, non-collapsing failure classification, evidence authority, historical comparison, drift checks, and teardown.
+
+The post-Level-6 independent audit found and fixed **AUD-1**, a stale runner-report inheritance defect that could have allowed an old report to influence a run that did not produce its own report. The periodic-validation test suite is now **22/22**, alongside **11/11** report-authority tests.
+
+Level 6 is deliberately qualified: the **mechanism is demonstrated**, but longitudinal confidence has not yet accumulated. Current evidence covers a single day of scheduled validation. The next step is therefore to let the existing validation mechanism accumulate real history rather than immediately adding Level 7 or another platform subsystem.
+
+Level 5 disaster recovery is currently **not applicable** because the project has no meaningful project-owned persistent state requiring restoration. Level 7 continuous validation remains deferred pending measurable entry criteria.
+
+The machine is disposable; the source of truth is persistent. Validation evidence is historical evidence rather than authoritative infrastructure state. Current limitations include local-only evidence retention, a declared local production-kubeconfig dependency for live fleet checks, and heuristic historical comparison.
+
+See:
+- [docs/15-reproducibility/level6-completion-record.md](docs/15-reproducibility/level6-completion-record.md)
+- [docs/history/post-level6-audit.md](docs/history/post-level6-audit.md)
+- [docs/history/engineering-evidence-index.md](docs/history/engineering-evidence-index.md)
+- [docs/15-reproducibility/reconstruction-manifest.md](docs/15-reproducibility/reconstruction-manifest.md)
 
 ## License & attribution
 
