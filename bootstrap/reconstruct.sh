@@ -94,9 +94,30 @@ print(f"report: {path}")
 PYEOF
 }
 
+# DEFECT L4-6 (report authority, discovered by the independent post-Level-4
+# audit): the report is part of the reproducibility contract — a
+# reconstruction cannot be considered successful unless its evidence
+# artifact is successfully GENERATED, VALIDATED, and PRESERVED. Before this
+# correction the writer's exit code was unchecked (no set -e), so a writer
+# failure left the run reporting success without evidence.
+report_validate() {  # report_validate <path> <expected_status> — sets REPORT_ERR
+  REPORT_ERR=""
+  [ -s "$1" ] || { REPORT_ERR="report generation failed (missing/empty artifact)"; return 1; }
+  python3 - "$1" "$2" <<'PYEOF' || { REPORT_ERR="report validation failed (invalid JSON or wrong final_status)"; return 1; }
+import json, sys
+d = json.load(open(sys.argv[1]))
+assert d.get("final_status") == sys.argv[2], f"final_status mismatch: {d.get('final_status')!r} != {sys.argv[2]!r}"
+assert isinstance(d.get("stages"), list) and len(d["stages"]) > 0, "stages missing/empty"
+PYEOF
+}
+
 fail_exit() {
-  emit_report "FAIL"
-  echo "RECONSTRUCTION FAILED — report preserved (not deleted, not hidden)"
+  if emit_report "FAIL" && report_validate "$REPORT" "FAIL"; then
+    echo "RECONSTRUCTION FAILED — report preserved (not deleted, not hidden)"
+  else
+    echo "RECONSTRUCTION FAILED — AND evidence generation failed: ${REPORT_ERR:-report writer error} (report may be missing at $REPORT)"
+    stage "evidence_authority" "FAIL" "failure-path report generation/validation failed: ${REPORT_ERR:-writer error}"
+  fi
   exit 1
 }
 
@@ -216,8 +237,12 @@ swap=${SWAP_USED:-0}
 print('OK' if free >= 35 and swap < 1600 else 'BLOCKED')" 2>/dev/null || echo BLOCKED)
   if [ "$GATE_OK" != "OK" ]; then
     stage "disposable_reconstruction" "SKIPPED" "resource gate BLOCKED (free=${FREE_PCT}% swap=${SWAP_USED}M) — protected fleet safety outranks reconstruction ambition"
-    emit_report "WARN"
-    exit 0
+    if emit_report "WARN" && report_validate "$REPORT" "WARN"; then
+      exit 0
+    else
+      echo "EVIDENCE AUTHORITY FAILURE (resource-gate path): ${REPORT_ERR:-report writer error}"
+      exit 1
+    fi
   fi
 
   # Disposable cluster: SEPARATE compose project, ephemeral kubeconfig dir,
@@ -460,5 +485,14 @@ echo "== reconstruction complete: $FINAL_STATUS (pass=$PASS warn=$WARN fail=$FAI
 if [ "$MODE_RESUME" = "1" ] && [ "$FINAL_STATUS" = "PASS" ]; then
   echo "resume note: re-running is safe — validation stages are read-only; disposable mode re-validated from scratch each run"
 fi
-emit_report "$FINAL_STATUS"
-exit 0
+# Evidence-authority gate: success is incomplete without valid evidence.
+if emit_report "$FINAL_STATUS" && report_validate "$REPORT" "$FINAL_STATUS"; then
+  echo "evidence authority: report generated, validated, preserved"
+  exit 0
+else
+  stage "evidence_authority" "FAIL" "report generation/validation failed on a ${FINAL_STATUS} reconstruction: ${REPORT_ERR:-writer error}"
+  echo "RECONSTRUCTION ${FINAL_STATUS} BUT EVIDENCE AUTHORITY FAILED — reporting FAIL per the reproducibility contract"
+  # best-effort second write capturing the failure itself
+  emit_report "FAIL" || true
+  exit 1
+fi
