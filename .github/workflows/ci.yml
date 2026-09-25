@@ -314,22 +314,6 @@ jobs:
           cat shadow-verdict.json | python3 -c \
             "import json,sys; d=json.load(sys.stdin); print('policy verdict:', d['verdict'], '| summary:', d['summary'])"
 
-      # ---- ENFORCEMENT GATE (activated 2026-09-24, authorized final gate) ----
-      # Runs AFTER all artifact uploads so a FAIL never destroys evidence.
-      # Rollback = delete this step (evaluator returns to pure shadow; all
-      # scanners/SBOM/gitleaks/image-policy remain untouched).
-      - name: policy enforcement decision (FAIL/UNKNOWN -> non-zero exit)
-        run: |
-          python3 - <<'PY'
-          import json, sys
-          d = json.load(open('shadow-verdict.json'))
-          verdict = d['verdict']
-          print(f"enforcement decision: {verdict}")
-          if verdict in ("WOULD_FAIL", "UNKNOWN"):
-              print("::error::security policy " + verdict + " — see shadow-policy-verdict artifact")
-              sys.exit(1)
-          PY
-
       - name: upload shadow policy artifact
         uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
@@ -359,3 +343,19 @@ jobs:
           name: rendered-manifest
           path: rendered-manifest.yaml
           retention-days: 7
+
+      # ---- ENFORCEMENT GATE (activated 2026-09-24, authorized final gate) ----
+      # Runs AFTER all artifact uploads so a FAIL never destroys evidence.
+      # Rollback = delete this step (evaluator returns to pure shadow; all
+      # scanners/SBOM/gitleaks/image-policy remain untouched).
+      - name: policy enforcement decision (FAIL/UNKNOWN -> non-zero exit)
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          d = json.load(open('shadow-verdict.json'))
+          verdict = d['verdict']
+          print(f"enforcement decision: {verdict}")
+          if verdict in ("WOULD_FAIL", "UNKNOWN"):
+              print("::error::security policy " + verdict + " — see shadow-policy-verdict artifact")
+              sys.exit(1)
+          PY
