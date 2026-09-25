@@ -44,8 +44,8 @@
   },
   "phase": 6,
   "phase_name": "Observability",
-  "status": "phase-8-reproducibility-level-3-achieved",
-  "next_action": "Post-L3 decision gate complete (ADR-0006): NEXT CANDIDATE = Level 4 disposable GitOps rebuild; AWS/IaC DEFERRED; observability DEFERRED; dep-automation reassess-after-L4; DR future. Awaiting separate authorization.",
+  "status": "phase-8-complete-level-4-gitops-reconstruction-demonstrated",
+  "next_action": "Level 4 complete (disposable GitOps reconstruction, failure tests 9/9, 9 defects fixed with evidence). Per ADR-0006 sequencing: dependency-automation reassessment, IaC/AWS, and DR design are separate future decisions.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {

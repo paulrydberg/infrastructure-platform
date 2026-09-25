@@ -103,7 +103,7 @@ infrastructure-platform/
 
 ## Reproducibility
 
-Demonstrated reconstruction maturity: **Level 3** — executable reconstruction contract + manifest + deterministic runner + resource-gated disposable-cluster validation (Level 3 record: docs/15-reproducibility/level3-completion-record.md). Prior demonstrated: the deployed platform
+Demonstrated reconstruction maturity: **Level 4** — GitOps-layer reconstruction: disposable k3s -> Argo CD from declared source -> Application reconciliation to Synced/Healthy at the pinned commit -> workload validation -> teardown, with failure injection + recovery (record: docs/15-reproducibility/level4-completion-record.md). Prior demonstrated: the deployed platform
 (source → bootstrap → container runtime → k3s → Helm → workload) has been
 destroyed and reconstructed from Git with no undocumented manual steps
 (Phase 2/3 evidence; application-level reconstruction additionally shown in

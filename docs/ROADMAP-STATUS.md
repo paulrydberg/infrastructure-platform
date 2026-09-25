@@ -440,3 +440,25 @@ from-scratch GitOps rebuild inside the disposable environment**
 - Disaster recovery (state restore): FUTURE — no project-state data
   exists today (state boundary documented in manifest v1.0.0)
 Numerical roadmap ordering explicitly rejected as a decision basis.
+
+## Phase 8 Level 4 — GitOps-Layer Reconstruction (COMPLETE 2026-09-25)
+Authorized Level 4 executed. bootstrap/reconstruct.sh extended: Argo CD
+installed from declared values (chart 7.7.11 -> v2.13.3) in the
+disposable cluster, Application applied from source-controlled manifest,
+platform-demo reconciled by Argo to Synced/Healthy at the exact pinned
+commit, workload validated against chart-declared state (pinned image,
+securityContext, resources, probes, service), GitOps teardown +
+whole-environment teardown. Clean-path evidence: 20/20 PASS, 80s, LLM 0
+(reports/level4-final-evidence.json @ 6e5f3a9). Failure injection suite
+(bootstrap/level4-failure-tests.sh): invalid Application source path ->
+Argo Unknown/error (never Synced); bad image tag -> health Progressing
+(never Healthy); recovery to Synced/Healthy (~11s) + 1/1 workload;
+9/9 PASS (reports/level4-failure-tests-evidence.txt). Nine defects
+discovered and fixed with preserved evidence: L4-1 ambient KUBECONFIG
+(helm ownership guard protected production), L4-2 ambient PATH,
+L4-3/L4-4 validator races/argv, L4-5 report serialization, stale-state
+guard, L4-FT-1..3 suite path/cert-race/port-release. Resource gate
+enforced before every disposable run; protected fleet untouched
+throughout. Zero inference; no cloud; no new resident services.
+LEVEL 4 COMPLETE. Level 5+ / AWS / dependency automation remain
+separate future decisions per ADR-0006 sequencing.
