@@ -368,14 +368,17 @@ YAML
   WV=$(DISPOSABLE_KUBECONFIG_ARG="$DISPOSABLE_KUBECONFIG" python3 - <<'PYEOF' 2>/dev/null
 import json, subprocess, os
 kc = os.environ["DISPOSABLE_KUBECONFIG_ARG"]
-def q(path):
-    r = subprocess.run(["kubectl","-n","platform-demo","get",path,"-o","json"],
+def q(*path):
+    # DEFECT L4-4: resource type + name must be separate argv items (a single
+    # "deploy platform-demo" string is parsed by kubectl as one bogus
+    # resource type -> rc=1 -> validator saw an empty cluster).
+    r = subprocess.run(["kubectl","-n","platform-demo","get",*path,"-o","json"],
                        capture_output=True, text=True,
                        env={**os.environ, "KUBECONFIG": kc})
     return json.loads(r.stdout) if r.returncode == 0 else None
-dep = q("deploy platform-demo") or {}
-pod = q("pod -l app.kubernetes.io/name=platform-demo") or {}
-svc = q("svc platform-demo")
+dep = q("deploy", "platform-demo") or {}
+pod = q("pod", "-l", "app.kubernetes.io/name=platform-demo") or {}
+svc = q("svc", "platform-demo")
 status = dep.get("status", {})
 cs = ((dep.get("spec", {}).get("template", {}).get("spec", {}).get("containers")) or [{}])[0]
 sc = cs.get("securityContext", {})
