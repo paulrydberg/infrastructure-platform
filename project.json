@@ -45,7 +45,7 @@
   "phase": 6,
   "phase_name": "Observability",
   "status": "phase-8-reproducibility-level-3-achieved",
-  "next_action": "Level 3 reconstruction complete (manifest + runner + disposable k3s reconstruction 12/12 PASS @ c07a881). Next candidate: Level 4 (full disposable GitOps rebuild) or AWS per roadmap - separate authorization required.",
+  "next_action": "Post-L3 decision gate complete (ADR-0006): NEXT CANDIDATE = Level 4 disposable GitOps rebuild; AWS/IaC DEFERRED; observability DEFERRED; dep-automation reassess-after-L4; DR future. Awaiting separate authorization.",
   "phase_0_report": "docs/01-discovery/discovery-report.md",
   "phase_1_report": "docs/03-foundation/completion-report.md",
   "repository": {

@@ -423,3 +423,20 @@ platform idempotence mechanism; destructive production test rejected
 by resource gate. Resource gate enforced before every disposable run
 (free>=35%, swap<1600M); protected fleet untouched post-run. CI and
 enforcement untouched. LEVEL 3 ACHIEVED; Level 4/AWS not begun.
+
+## Post-Level-3 Architecture Decision Gate (2026-09-25, ADR-0006)
+Decision-gate analysis completed (no implementation). Options compared:
+Level 4 GitOps-rebuild / IaC-AWS / observability / dependency
+automation / DR. **NEXT CANDIDATE: Level 4 reproducibility — full
+from-scratch GitOps rebuild inside the disposable environment**
+(ADR-0006). Roadmap state after this gate:
+- Phase 8 (Reproducibility L3): COMPLETE
+- Level 4 (disposable GitOps rebuild): NEXT CANDIDATE — not authorized
+- AWS / IaC (Terraform/OpenTofu, VPC, IAM, ECR, EKS): DEFERRED
+  (dependency order per ADR-0006 — not cancelled; reconsider after L4)
+- Observability (Prometheus/Grafana/...): DEFERRED, cloud-dependent
+  variant preferred (memory constraint; no demonstrated need)
+- Dependency automation (Renovate/Dependabot): REASSESS AFTER LEVEL 4
+- Disaster recovery (state restore): FUTURE — no project-state data
+  exists today (state boundary documented in manifest v1.0.0)
+Numerical roadmap ordering explicitly rejected as a decision basis.
