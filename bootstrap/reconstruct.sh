@@ -198,10 +198,10 @@ services:
     command: >
       server --disable=traefik --disable=servicelb --disable=metrics-server
       --write-kubeconfig=/output/kubeconfig.yaml --write-kubeconfig-mode=600
-      --https-listen-port=16443 --bind-address=127.0.0.1 --advertise-address=127.0.0.1
+      --tls-san=127.0.0.1
     privileged: true
     ports:
-      - "127.0.0.1:16443:16443"
+      - "127.0.0.1:16443:6443"
     volumes:
       - ./kubeconfig:/output
 YAML
@@ -234,8 +234,10 @@ YAML
     fail_exit
   fi
 
-  # Copy kubeconfig out of the container and validate from the host
-  docker cp reconstruct-k3s-disposable:/etc/rancher/k3s/k3s.yaml "$DISPOSABLE_KUBECONFIG" 2>/dev/null
+  # kubeconfig is bind-mounted at /output -> the host temp dir already has it.
+  # k3s listens on its standard 6443 INSIDE the container; the host reachess
+  # it via the 16443->6443 mapping, so rewrite the server line for the
+  # host-side validation (--tls-san=127.0.0.1 makes the cert valid there).
   sed -i '' 's#server: https://127.0.0.1:6443#server: https://127.0.0.1:16443#' "$DISPOSABLE_KUBECONFIG" 2>/dev/null \
     || sed -i 's#server: https://127.0.0.1:6443#server: https://127.0.0.1:16443#' "$DISPOSABLE_KUBECONFIG"
   if KUBECONFIG="$DISPOSABLE_KUBECONFIG" kubectl get nodes 2>/dev/null | grep -q " Ready "; then
