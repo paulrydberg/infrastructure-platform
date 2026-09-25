@@ -145,6 +145,26 @@ check "T9: post-failure run PASS" "$t9_pass" "yes"
 grep -q "same\|changed" "$T/t9.out" && t9_cmp=yes || t9_cmp=no
 check "T9: historical comparison executed" "$t9_cmp" "yes"
 
+echo "== T10: stale-report inheritance blocked (audit AUD-1) =="
+# If the current run produces no fresh runner report, it must NOT inherit the
+# previous run's PASS classification. Simulate: unwritable evidence dir prevents
+# the wrapper from running the runner at all, while a STALE PASS report exists.
+T10D=/tmp/l6-audit-t10; rm -rf "$T10D"; mkdir -p "$T10D/ev"
+# ensure a stale PASS report exists (the repo has real ones)
+STALE=$(ls -t "$HERE/../docs/15-reproducibility/reports"/reconstruct-*.json 2>/dev/null | head -1)
+if [ -n "$STALE" ]; then
+  chmod 555 "$T10D/ev"
+  L6_VALIDATE_ONLY=1 L6_EVIDENCE_DIR="$T10D/ev/sub" bash "$HERE/periodic-validate.sh" >/dev/null 2>&1
+  t10_rc=$?
+  chmod 755 "$T10D/ev"
+  # authority: must NOT be exit 0 (PASS); EVIDENCE_ERROR(2) or FAIL(1) acceptable
+  if [ "$t10_rc" != "0" ]; then t10=pass; else t10=fail; fi
+  check "T10: stale-report PASS inheritance blocked" "$t10" "pass"
+else
+  echo "SKIP  T10 (no runner report available)"
+fi
+rm -rf "$T10D"
+
 echo "== RESULT: pass=$PASS fail=$FAILN =="
 [ "$FAILN" = "0" ] && echo "LEVEL 6 TESTS: ALL PASS" || echo "LEVEL 6 TESTS: FAILURES PRESENT"
 exit "$FAILN"

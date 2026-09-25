@@ -120,9 +120,20 @@ DURATION=$((RUNNER_END - RUNNER_START))
 
 # ---- classify the outcome (never collapse classes) -------------------------
 # Read the runner's own machine-readable verdict (authoritative evidence).
+# AUD-1 (post-Level-6 audit): the report must be FRESH — produced by THIS run
+# (mtime >= wrapper start). Without this, a run whose report write failed
+# inherits a STALE prior PASS report and its evidence record describes the
+# wrong run (source_commit/duration/stages) — an evidence-authority inversion
+# found by the audit's unwritable-evidence-dir probe.
+WRAP_START_EPOCH=$(date -u +%s)
 LATEST_REPORT=$(ls -t "$REPO_ROOT"/docs/15-reproducibility/reports/reconstruct-*.json 2>/dev/null | head -1)
+REPORT_FRESH="no"
+if [ -n "$LATEST_REPORT" ]; then
+  REPORT_MTIME=$(stat -f %m "$LATEST_REPORT" 2>/dev/null || stat -c %Y "$LATEST_REPORT" 2>/dev/null || echo 0)
+  if [ "$REPORT_MTIME" -ge "$WRAP_START_EPOCH" ]; then REPORT_FRESH="yes"; fi
+fi
 FINAL_STATUS="UNKNOWN"; RUNNER_COMMIT=""; RUNNER_DURATION=""; STAGE_COUNT=0; EVIDENCE_VALID="no"
-if [ -n "$LATEST_REPORT" ] && python3 - "$LATEST_REPORT" <<'PYEOF' 2>/dev/null
+if [ "$REPORT_FRESH" = "yes" ] && python3 - "$LATEST_REPORT" <<'PYEOF' 2>/dev/null
 import json, sys
 d = json.load(open(sys.argv[1]))
 assert d.get("final_status") in ("PASS", "WARN", "FAIL", "BLOCKED"), "bad final_status"
