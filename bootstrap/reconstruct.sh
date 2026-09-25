@@ -54,6 +54,7 @@ stage() {  # stage <name> <status> <detail...>
   # failed to generate). Correction: stages are recorded as tab-separated
   # fields and serialized to JSON by python (single source of truth for
   # escaping).
+  detail=$(printf '%s' "$detail" | tr '\t\n' '  ')
   printf '%s\t%s\t%s\n' "$name" "$status" "$detail" >> "$STAGES_TSV"
   case "$status" in
     PASS) PASS=$((PASS+1)); echo "PASS   $name — $detail" ;;
@@ -73,6 +74,7 @@ path, final, duration, tsv = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.arg
 stages = [
     {"stage": r[0], "status": r[1], "detail": r[2] if len(r) > 2 else ""}
     for r in csv.reader(open(tsv), delimiter="\t")
+    if len(r) >= 2
 ]
 report = {
     "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
