@@ -23,7 +23,7 @@ securityContext:
   runAsNonRoot: true
   runAsUser: 65534
   allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: true
+  readOnlyRootFilesystem: false
 
 probes:
   readiness:
