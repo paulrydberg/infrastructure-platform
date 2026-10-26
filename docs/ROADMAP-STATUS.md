@@ -5,10 +5,10 @@
 > every session or work item. The master spec's §79 defines Phases 0–19;
 > Amendment 1 adds the GitHub/portfolio workstream.
 
-**Last updated:** 2026-09-25 (post-Level-6 independent audit)
-**Current workstream:** Level 6 — Periodically Verified Reconstruction ✅ MECHANISM DEMONSTRATED
-**Current status:** periodic validation is operating through the host's existing launchd scheduler; the mechanism has been independently audited, AUD-1 was fixed, and longitudinal history is now intentionally accumulating.
-**Next gate:** no new capability implementation. Reassess after sufficient scheduled history; Level 7 and dependency automation require separate authorization.
+**Last updated:** 2026-10-26 (Level 6 longitudinal review, day 29)
+**Current workstream:** Level 6 — longitudinal accumulation in progress ⏳ (gate-blocked environmental issue under recovery)
+**Current status:** 4.17 weeks of scheduled history accumulated (18 records: 6 PASS / 10 FAIL / 2 BLOCKED). Evaluator verdict: NOT_READY — pass rate 37.5% excluding BLOCKED (denominator semantics unchanged). Root cause of the 8 consecutive scheduled FAILs (Sep 30–Oct 24): host free-disk gate (50 GiB required; host fell to 31→24 GiB). The gate functioned correctly throughout; no threshold was modified. Host cleanup on 2026-10-26 restored ~65 GiB free (caches purged; regenerable). One genuine reboot occurred 2026-10-25 21:32 CDT; the next scheduled window provides the natural evidence-survival test.
+**Next gate:** unchanged — no new capability implementation. Recovery of qualifying PASS history begins at the 2026-10-31 04:17 CDT window. Level 7 and dependency automation still require separate authorization.
 
 > **Important:** roadmap phase numbers and reproducibility maturity levels are separate axes. The original roadmap's Phase 8 is AWS; later work re-sequenced reproducibility into the current Phase 8 workstream. Do not equate Phase 8 with Maturity Level 8.
 
