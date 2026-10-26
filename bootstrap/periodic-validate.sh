@@ -121,16 +121,22 @@ DURATION=$((RUNNER_END - RUNNER_START))
 # ---- classify the outcome (never collapse classes) -------------------------
 # Read the runner's own machine-readable verdict (authoritative evidence).
 # AUD-1 (post-Level-6 audit): the report must be FRESH — produced by THIS run
-# (mtime >= wrapper start). Without this, a run whose report write failed
+# (mtime >= runner start). Without this, a run whose report write failed
 # inherits a STALE prior PASS report and its evidence record describes the
 # wrong run (source_commit/duration/stages) — an evidence-authority inversion
 # found by the audit's unwritable-evidence-dir probe.
-WRAP_START_EPOCH=$(date -u +%s)
+# DEFECT AUD-2 (found 2026-10-26): the freshness anchor was re-sampled AFTER
+# the runner finished; when the wall-clock second ticked between runner exit
+# and the anchor sample, a genuinely fresh report was misjudged stale —
+# validate-only runs then hit EVIDENCE_ERROR (exit 2) intermittently (the
+# suite's T1/T9 flake; runner rc=0 + no valid report is exactly exit-2
+# territory). Anchor to RUNNER_START (taken just before the runner spawns):
+# "written during or after this run's execution" is the AUD-1 invariant.
 LATEST_REPORT=$(ls -t "$REPO_ROOT"/docs/15-reproducibility/reports/reconstruct-*.json 2>/dev/null | head -1)
 REPORT_FRESH="no"
 if [ -n "$LATEST_REPORT" ]; then
   REPORT_MTIME=$(stat -f %m "$LATEST_REPORT" 2>/dev/null || stat -c %Y "$LATEST_REPORT" 2>/dev/null || echo 0)
-  if [ "$REPORT_MTIME" -ge "$WRAP_START_EPOCH" ]; then REPORT_FRESH="yes"; fi
+  if [ "$REPORT_MTIME" -ge "$RUNNER_START" ]; then REPORT_FRESH="yes"; fi
 fi
 FINAL_STATUS="UNKNOWN"; RUNNER_COMMIT=""; RUNNER_DURATION=""; STAGE_COUNT=0; EVIDENCE_VALID="no"
 if [ "$REPORT_FRESH" = "yes" ] && python3 - "$LATEST_REPORT" <<'PYEOF' 2>/dev/null

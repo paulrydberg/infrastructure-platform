@@ -223,6 +223,19 @@ assert "runner_version: 9.9.9 -> 1.1.0 (CHANGED)" in d["historical_comparison"],
 PYEOF
 check "T19: version CHANGED reported, drift still clean" "$t19a" "pass"
 
+echo "== T20: freshness anchor is RUNNER_START (AUD-2 regression guard) =="
+# DEFECT AUD-2: the report-freshness anchor was sampled AFTER the runner
+# exited; a one-second wall-clock tick between runner exit and anchor sample
+# misjudged genuinely fresh reports as stale -> intermittent exit-2
+# (EVIDENCE_ERROR) on validate-only runs. The fix anchors freshness to
+# RUNNER_START. This contract test pins that anchoring so the race cannot
+# silently return; the full behavioral effect is only observable when the
+# host disk gate passes (then T1/T9 become reliable).
+grep -q 'REPORT_MTIME.*-ge.*RUNNER_START' "$HERE/periodic-validate.sh" && t20a=pass || t20a=fail
+check "T20: freshness anchored to runner start" "$t20a" "pass"
+grep -q 'WRAP_START_EPOCH' "$HERE/periodic-validate.sh" && t20b=fail || t20b=pass
+check "T20: post-exit anchor removed" "$t20b" "pass"
+
 echo "== RESULT: pass=$PASS fail=$FAILN =="
 [ "$FAILN" = "0" ] && echo "LEVEL 6 TESTS: ALL PASS" || echo "LEVEL 6 TESTS: FAILURES PRESENT"
 exit "$FAILN"
