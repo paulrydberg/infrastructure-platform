@@ -194,13 +194,15 @@ historical, not authoritative-state).
 ## 23. Remaining limitations & defects
 
 - **AUD-1** (found+fixed this audit, commit `2c6c575`, test T10, 22/22)
-- **AUD-2** (found+fixed 2026-10-26, commit post-`1ab407f`, test T20): the
-  report-freshness anchor was sampled *after* the runner exited, so a
-  wall-clock second-tick between runner exit and anchor sample misjudged
-  genuinely fresh reports as stale → intermittent exit-2 (EVIDENCE_ERROR)
-  on validate-only runs. Anchor corrected to `RUNNER_START`; suite's
-  intermittent exit-2 flake eliminated (remaining T1/T9 failures are the
-  deterministic disk-gate precondition, not a defect).
+- **AUD-2** (found+fixed 2026-10-26, commits `cb045e6` + `3734101`, tests T20
+  + precondition-aware T1/T9): the report-freshness anchor was sampled *after*
+  the runner exited, so a wall-clock second-tick between runner exit and
+  anchor sample misjudged genuinely fresh reports as stale → intermittent
+  exit-2 (EVIDENCE_ERROR) on validate-only runs. Anchor corrected to
+  `RUNNER_START`; T1/T9 now branch on the disk-gate precondition (PASS path
+  asserted when ≥50 GiB, honest-FAIL classification otherwise). Suite:
+  29 pass / 0 fail at any disk level; the intermittent exit-2 flake is
+  eliminated.
 - Local-only evidence retention (KNOWN LIMITATION)
 - Production kubeconfig required for live validation stages on this host (KNOWN LIMITATION,
   declared)
