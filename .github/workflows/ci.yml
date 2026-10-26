@@ -275,36 +275,32 @@ jobs:
       - name: fetch previous successful run's scan JSON (R2 persistence input)
         continue-on-error: true
         run: |
-          # Deterministic previous-run source: the last successful build run
-          # on this branch that produced security-evidence. First run (or
-          # retention gap) -> no file -> evaluator records MISSING HISTORY
-          # as UNKNOWN for R2 (never "no vulnerabilities").
-          # DEFECT CI-R2-1 (found by PR #4, 2026-09-25): for pull_request
-          # runs GITHUB_REF_NAME is "<PR>/merge", a synthetic ref that has no
-          # prior runs — so this lookup ALWAYS failed on PRs and the security
-          # gate returned R2=UNKNOWN (UNKNOWN blocks merge), blocking every
-          # PR regardless of content. Correction: fall back to the PR's BASE
-          # branch (github.base_ref) when the PR ref has no history. R2
-          # semantics are unchanged: the baseline is still the last
-          # successful run's real scan; missing history is still recorded as
-          # UNKNOWN and NEVER fabricated as "no vulnerabilities". No policy
-          # rule, threshold, exception, or enforcement behavior is altered.
-          PREV_RUN_ID=$(gh run list --branch "$GITHUB_REF_NAME" \
-            --status success --limit 10 --json databaseId,headSha \
-            --jq '[.[] | select(.headSha != env.GITHUB_SHA)][0].databaseId // ""')
-          BASELINE_BRANCH="$GITHUB_REF_NAME"
-          if [ -z "$PREV_RUN_ID" ] && [ -n "${github_base_ref:-}" ]; then
-            BASELINE_BRANCH="$github_base_ref"
-            PREV_RUN_ID=$(gh run list --branch "$BASELINE_BRANCH" \
-              --status success --limit 10 --json databaseId,headSha \
-              --jq '[.[] | select(.headSha != env.GITHUB_SHA)][0].databaseId // ""')
-          fi
-          if [ -n "$PREV_RUN_ID" ]; then
-            gh run download "$PREV_RUN_ID" -n security-evidence -D /tmp/prev-evidence || true
-            [ -f /tmp/prev-evidence/trivy-report.json ] && \
-              cp /tmp/prev-evidence/trivy-report.json /tmp/previous-trivy-report.json || true
-          fi
-          [ -f /tmp/previous-trivy-report.json ] && echo "previous scan: run $PREV_RUN_ID (branch: $BASELINE_BRANCH)" \
+          # Deterministic previous-run source: the most recent prior run on
+          # this branch that produced a VALID security-evidence artifact,
+          # regardless of that run's overall CI conclusion (evidence was
+          # uploaded before the enforcement gate by design).
+          # DEFECT CI-R2-1 (PR #4, 2026-09-25): PR refs are synthetic and
+          # have no prior runs — fall back to the PR base branch.
+          # DEFECT CI-R2-2 (2026-10-26): restricting the baseline to runs
+          # with conclusion=success deadlocks when a run fails at the FINAL
+          # enforcement step (its evidence exists but no newer successful
+          # run can ever appear). Baseline selection now goes through
+          # tools/policy/baseline_selector.py: same repo/branch, this
+          # workflow only, current run and same-commit reruns excluded,
+          # artifact re-validated with the evaluator's own validate_scan.
+          # R2 semantics unchanged: missing history is still recorded as
+          # UNKNOWN and NEVER fabricated as "no vulnerabilities". No
+          # policy rule, threshold, exception, or enforcement behavior is
+          # altered; API/retrieval failures fail closed (no baseline).
+          PREV=$(python3 tools/policy/baseline_selector.py \
+            "${{ github.base_ref || github.ref_name }}" "$GITHUB_SHA" "$GITHUB_RUN_ID")
+          echo "$PREV"
+          case "$PREV" in
+            /tmp/baseline-evidence/trivy-report.json)
+              cp "$PREV" /tmp/previous-trivy-report.json ;;
+          esac
+          [ -f /tmp/previous-trivy-report.json ] \
+            && echo "previous scan: validated baseline installed" \
             || echo "previous scan: UNAVAILABLE (R2=UNKNOWN this cycle)"
         env:
           GH_TOKEN: ${{ github.token }}
