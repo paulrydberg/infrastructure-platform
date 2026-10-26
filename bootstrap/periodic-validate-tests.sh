@@ -165,6 +165,64 @@ else
 fi
 rm -rf "$T10D"
 
+echo "== T18: comparison diffs runner/manifest versions (end-to-end) =="
+# Seed a prior record with DIFFERENT runner/manifest versions; after a real
+# wrapper run (PASS or FAIL both acceptable — the runner currently fails on
+# the host disk gate, which is environmental, not under test), the retained
+# record's historical_comparison must show the version change.
+mkdir -p "$T/t18/ev"
+cat > "$T/t18/ev/validation-l6-t18prev.json" <<'EOF'
+{"run_id":"l6-t18prev","source_commit":"1111111111111111111111111111111111111111","runner_version":"9.9.9","manifest_version":"9.9.9","overall_result":"PASS","duration_seconds":84,"resource_gate":"PASSED","runner_report":"/tmp/l6-t18-nonexistent-report.json"}
+EOF
+L6_VALIDATE_ONLY=1 L6_EVIDENCE_DIR="$T/t18/ev" bash "$HERE/periodic-validate.sh" > "$T/t18.out" 2>&1
+t18_rc=$?
+# NOTE: the wrapper's exit code varies with host environment (the disk gate
+# makes the runner FAIL => 1; the pristine suite also shows intermittent
+# exit 2 on T1/T9 — pre-existing, not caused by this change). The invariant
+# under test is the RETAINED RECORD's content, asserted below; here we only
+# require that the wrapper ran to a classified outcome (0/1/3) or recorded
+# an evidence error (2) rather than crashing.
+case "$t18_rc" in 0|1|2|3) t18rc=pass ;; *) t18rc=fail ;; esac
+check "T18: wrapper reaches a classified outcome" "$t18rc" "pass"
+NEW18=$(ls -t "$T/t18/ev"/validation-*.json | grep -v t18prev | head -1)
+python3 - "$NEW18" <<'PYEOF' && t18a=pass || t18a=fail
+import json, sys
+d = json.load(open(sys.argv[1]))
+cmp = d["historical_comparison"]
+assert "runner_version: 9.9.9 -> 1.1.0 (CHANGED)" in cmp, cmp
+assert "manifest_version: 9.9.9 -> 1.0.0 (CHANGED)" in cmp, cmp
+PYEOF
+check "T18: version CHANGED visible in retained comparison" "$t18a" "pass"
+python3 - "$NEW18" <<'PYEOF' && t18b=pass || t18b=fail
+import json, sys
+d = json.load(open(sys.argv[1]))
+assert d["runner_version"] and d["manifest_version"], "record missing versions"
+PYEOF
+check "T18: record carries its own runner/manifest versions" "$t18b" "pass"
+
+echo "== T19: version change alone is not drift; stable duration stays clean =="
+# Prior record: same-duration scale (1s class) so no duration regression, but
+# different versions. Expected: drift stays NO_UNEXPECTED_DRIFT while the
+# comparison still marks the versions CHANGED — proving version fields are
+# reported but never classified as drift by themselves.
+mkdir -p "$T/t19/ev"
+cat > "$T/t19/ev/validation-l6-t19prev.json" <<'EOF'
+{"run_id":"l6-t19prev","source_commit":"1111111111111111111111111111111111111111","runner_version":"9.9.9","manifest_version":"9.9.9","overall_result":"FAIL","duration_seconds":1,"resource_gate":"PASSED","runner_report":"/tmp/l6-t19-nonexistent-report.json"}
+EOF
+L6_VALIDATE_ONLY=1 L6_EVIDENCE_DIR="$T/t19/ev" bash "$HERE/periodic-validate.sh" > "$T/t19.out" 2>&1
+t19_rc=$?
+# exit-code note as in T18: environmental variability, invariant is record content
+case "$t19_rc" in 0|1|2|3) t19rc=pass ;; *) t19rc=fail ;; esac
+check "T19: wrapper reaches a classified outcome" "$t19rc" "pass"
+NEW19=$(ls -t "$T/t19/ev"/validation-*.json | grep -v t19prev | head -1)
+python3 - "$NEW19" <<'PYEOF' && t19a=pass || t19a=fail
+import json, sys
+d = json.load(open(sys.argv[1]))
+assert d["drift_result"] == "NO_UNEXPECTED_DRIFT", d["drift_result"]
+assert "runner_version: 9.9.9 -> 1.1.0 (CHANGED)" in d["historical_comparison"], d["historical_comparison"]
+PYEOF
+check "T19: version CHANGED reported, drift still clean" "$t19a" "pass"
+
 echo "== RESULT: pass=$PASS fail=$FAILN =="
 [ "$FAILN" = "0" ] && echo "LEVEL 6 TESTS: ALL PASS" || echo "LEVEL 6 TESTS: FAILURES PRESENT"
 exit "$FAILN"

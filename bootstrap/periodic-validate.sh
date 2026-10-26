@@ -183,9 +183,17 @@ if [ -n "$PREV" ]; then
   fi
 fi
 if [ -n "$PREV" ]; then
-  COMPARISON=$(python3 - "$PREV" "$LATEST_REPORT" <<'PYEOF' 2>/dev/null || echo "comparison error"
+  # argv[3]/argv[4] = wrapper identity for the comparison's CURRENT side
+  # (the runner report does not carry it; env-prefix assignments are not
+  # visible inside a command substitution, so argv is used deliberately)
+  COMPARISON=$(python3 - "$PREV" "$LATEST_REPORT" "1.1.0" "1.0.0" <<'PYEOF' 2>/dev/null || echo "comparison error"
 import json, sys
 prev = json.load(open(sys.argv[1])); cur = json.load(open(sys.argv[2]))
+# The runner report does not carry wrapper identity, so the CURRENT side of
+# the version fields comes from argv (the wrapper's own constants); the
+# PREVIOUS side comes from the prior retained record.
+if len(sys.argv) > 3 and sys.argv[3]: cur["runner_version"] = sys.argv[3]
+if len(sys.argv) > 4 and sys.argv[4]: cur["manifest_version"] = sys.argv[4]
 rows = []
 pc, cc = prev.get("source_commit"), cur.get("source_commit")
 rows.append(f"revision: {'changed' if pc != cc else 'same'} ({str(pc)[:8]} -> {str(cc)[:8]})")
@@ -199,6 +207,18 @@ if isinstance(pd, int) and isinstance(cd, int):
 pg, cg = prev.get("resource_gate"), cur.get("resource_gate")
 if pg and cg:
     rows.append(f"resource gate: {pg} -> {cg}")
+# runner/manifest versions: diffed so a genuine version change is visible in
+# the comparison record (Level 7 criterion 6 evidence input). A version
+# change is reported, never classified as drift by itself; duration drift
+# semantics are unchanged. Missing fields (very old records) are skipped.
+pv, cv = prev.get("runner_version"), cur.get("runner_version")
+if pv or cv:
+    vm = "CHANGED" if pv != cv else "same"
+    rows.append(f"runner_version: {pv} -> {cv} ({vm})")
+pm, cm = prev.get("manifest_version"), cur.get("manifest_version")
+if pm or cm:
+    vm2 = "CHANGED" if pm != cm else "same"
+    rows.append(f"manifest_version: {pm} -> {cm} ({vm2})")
 print("; ".join(rows))
 PYEOF
 )
