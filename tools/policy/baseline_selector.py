@@ -36,6 +36,10 @@ import shadow_evaluator  # noqa: E402  (single validation authority)
 
 ARTIFACT_NAME = "security-evidence"
 EVIDENCE_FILE = "trivy-report.json"
+# Contract: on success __main__ prints exactly this string (bare path);
+# the ci.yml baseline step case-matches this exact text. Tested by
+# test_baseline_selector.test_7_workflow_contract — keep them in sync.
+BASELINE_PATH = "/tmp/baseline-evidence/" + EVIDENCE_FILE
 
 
 def _gh(args, timeout=60):
@@ -117,13 +121,15 @@ if __name__ == "__main__":
     sha = os.environ.get("GITHUB_SHA") or sys.argv[2]
     run_id = os.environ.get("GITHUB_RUN_ID") or sys.argv[3]
     try:
-        path = select_baseline(ref, sha, run_id)
+        path = select_baseline(ref, sha, run_id, dest="/tmp/baseline-evidence")
     except RuntimeError as e:
         # API failure = cannot verify any candidate = fail closed (no file)
         print("baseline selection: API error (%s) -> no baseline (R2=UNKNOWN)" % e)
         path = None
+    # Contract (tested in test_baseline_selector.test_7_workflow_contract):
+    # on success print the bare canonical path and nothing else; the ci.yml
+    # baseline step case-matches this exact string to copy the file.
     if path:
-        print("previous scan: %s" % path)
-        # caller copies this file into place; nothing else printed
+        print(BASELINE_PATH)
     else:
         print("previous scan: UNAVAILABLE (R2=UNKNOWN this cycle)")

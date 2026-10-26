@@ -148,6 +148,23 @@ class TestBaselineSelection(Base):
         with mock.patch.object(bs, "list_candidate_runs", return_value=[]):
             self.assertIsNone(bs.select_baseline("main", "zz", 999, self.dest))
 
+    def test_7_workflow_contract(self):
+        """Module output and the ci.yml baseline-step case pattern must
+        not drift: the module must print exactly BASELINE_PATH on success
+        and the workflow must case-match that exact string. (Guards the
+        2026-10-26 handoff defect where the prefix 'previous scan: '
+        broke the copy and R2 stayed UNKNOWN despite a valid baseline.)"""
+        self.assertEqual(bs.BASELINE_PATH,
+                         "/tmp/baseline-evidence/trivy-report.json")
+        wf_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "..", "..", ".github", "workflows", "ci.yml")
+        wf = open(wf_path).read()
+        self.assertIn('case "$PREV" in', wf)
+        self.assertIn(bs.BASELINE_PATH, wf)
+        src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "baseline_selector.py")).read()
+        self.assertIn("print(BASELINE_PATH)", src)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
