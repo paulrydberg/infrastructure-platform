@@ -5,9 +5,10 @@
 > every session or work item. The master spec's §79 defines Phases 0–19;
 > Amendment 1 adds the GitHub/portfolio workstream.
 
-**Last updated:** 2026-10-26 (Level 6 longitudinal review, day 29)
-**Current workstream:** Level 6 — longitudinal accumulation in progress ⏳ (gate-blocked environmental issue under recovery)
+**Last updated:** 2026-10-26 (day-29 review + CI-R2-2 repair)
+**Current workstream:** Level 6 — longitudinal accumulation in progress ⏳ (disk-gate blockage resolved on 2026-10-26; qualifying history resumes at the next scheduled window)
 **Current status:** 4.17 weeks of scheduled history accumulated (18 records: 6 PASS / 10 FAIL / 2 BLOCKED). Evaluator verdict: NOT_READY — pass rate 37.5% excluding BLOCKED (denominator semantics unchanged). Root cause of the 8 consecutive scheduled FAILs (Sep 30–Oct 24): host free-disk gate (50 GiB required; host fell to 31→24 GiB). The gate functioned correctly throughout; no threshold was modified. Host cleanup on 2026-10-26 restored ~65 GiB free (caches purged; regenerable). One genuine reboot occurred 2026-10-25 21:32 CDT; the next scheduled window provides the natural evidence-survival test.
+**CI/security repair (same day):** defect CI-R2-2 — the R2 baseline fetch required a prior run with CI conclusion `success`, deadlocking permanently once any run failed at the final enforcement step (its evidence, uploaded before the gate, was real but unreachable). Baseline selection now uses `tools/policy/baseline_selector.py` (evidence-existence + re-validation via the evaluator's own `validate_scan`; current-run/self-SHA exclusion; fail-closed on retrieval errors). Fixed in `39f9113` + `71cfc8b`; verified green on run 40359054233 (verdict WARN, R2: history available, 68 persistent / 0 new / 0 resolved). No policy rule, threshold, or enforcement behavior changed. Outstanding: two musl-related P2 severity/CVE records (retained UNKNOWN via R3); cause of the pre-expiry deletion of the 2026-09-25 security-evidence artifact unknown; branch protection still unconfigured (documented gap).
 **Next gate:** unchanged — no new capability implementation. Recovery of qualifying PASS history begins at the 2026-10-31 04:17 CDT window. Level 7 and dependency automation still require separate authorization.
 
 > **Important:** roadmap phase numbers and reproducibility maturity levels are separate axes. The original roadmap's Phase 8 is AWS; later work re-sequenced reproducibility into the current Phase 8 workstream. Do not equate Phase 8 with Maturity Level 8.

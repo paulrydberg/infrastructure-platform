@@ -1,5 +1,15 @@
 # Phase 7 — Security Baseline (Stage 7A: CI Evidence)
 
+> **Status note (2026-10-26):** this document records Stage 7A as completed.
+> The policy lifecycle has since advanced past the "future gate decision"
+> language below: enforcement was authorized and activated in Phase 7C
+> (commit `eb451e2`, verified on run 36074112719) — see
+> [phase7c-enforcement-activation.md](phase7c-enforcement-activation.md) and
+> the policy model under
+> [phase7c-policy-model.md](phase7c-policy-model.md). This file is retained
+> as the 7A evidence record; the "enforcement is a future gate decision"
+> wording below is historical, not current status.
+
 **Status: Stage 7A complete — DETECT/BASELINED established. Nothing is
 BLOCKED yet by policy; enforcement is a future gate decision.**
 

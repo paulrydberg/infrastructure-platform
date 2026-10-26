@@ -12,7 +12,10 @@
 every pull request and push to `main` — secret scan, shell/Python syntax,
 Compose validation, documentation links, Helm lint/template, chart↔Compose
 consistency, Kubernetes schema validation (kubeconform), container build,
-and real application tests. Controlled failure modes demonstrated via
+real application tests, and a deterministic security policy
+evaluator + enforcement gate (see [tools/policy/README.md](tools/policy/README.md) —
+a `WARN` verdict is a passing run with visible findings, not a clean bill).
+Controlled failure modes demonstrated via
 [PR #2](https://github.com/paulrydberg/infrastructure-platform/pull/2).
 
 ## What this is
@@ -117,7 +120,7 @@ The project has demonstrated:
 
 The post-Level-6 independent audit found and fixed **AUD-1**, a stale runner-report inheritance defect that could have allowed an old report to influence a run that did not produce its own report. The periodic-validation test suite is now **22/22**, alongside **11/11** report-authority tests.
 
-Level 6 is deliberately qualified: the **mechanism is demonstrated**, but longitudinal confidence has not yet accumulated. Current evidence covers a single day of scheduled validation. The next step is therefore to let the existing validation mechanism accumulate real history rather than immediately adding Level 7 or another platform subsystem.
+Level 6 is deliberately qualified: the **mechanism is demonstrated**, but longitudinal confidence is still being earned. As of the day-29 review (2026-10-26) the evidence window covers **4.17 weeks / 18 scheduled-window records (6 PASS / 10 FAIL / 2 BLOCKED; 37.5% PASS excluding BLOCKED)** — including 8 consecutive FAILs (Sep 30–Oct 24) caused by the host's own 50 GiB free-disk prerequisite gate tripping on real disk pressure. The gate functioned correctly throughout; the threshold was never modified. The host disk was recovered on 2026-10-26 and qualifying history accumulation resumes at the next scheduled window (2026-10-31 04:17 CDT), which also provides the natural post-reboot evidence-survival test. The next step is therefore to let the existing validation mechanism accumulate qualifying history rather than immediately adding Level 7 or another platform subsystem.
 
 Level 5 disaster recovery is currently **not applicable** because the project has no meaningful project-owned persistent state requiring restoration. Level 7 continuous validation remains deferred pending measurable entry criteria.
 
