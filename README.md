@@ -64,6 +64,14 @@ baselines are measured and documented in
 | Persistent observability stack | 📋 Deferred — no demonstrated diagnostic need and memory remains the binding constraint |
 | AI operations | 📋 Deferred — deterministic boundaries have not yet required LLM inference |
 
+### Recent progress (verified 2026-10-26/27 — see [docs/ROADMAP-STATUS.md](docs/ROADMAP-STATUS.md) for the evidence trail)
+
+- **Reproducibility hardening:** historical validation comparison now diffs runner/manifest versions (tests T18/T19 — makes the Level 7 "stable comparison across a runner-version change" criterion *measurable*); evidence-freshness race fixed (AUD-2, test T20); test suite fully green (29/29) with disk-gate-aware T1/T9 assertions. Commits `1ab407f`, `cb045e6`, `3734101`.
+- **CI security-gate repair:** the R2 persistence baseline could deadlock after any enforcement-gate failure; baseline selection now keys on evidence existence + re-validation via the evaluator's own validator (`39f9113` + `71cfc8b`, verified on run 40359054233: verdict WARN, 68 persistent / 0 new / 0 resolved).
+- **Disk-capacity root cause identified by experiment:** the unexplained 19–31 GiB free-space swings — and the 8 consecutive scheduled-validation failures they caused — were Time Machine hourly local snapshots pinning deleted data (`2b9beac`). Capacity restored to ~56 GiB at time of writing; the 50 GiB gate was never modified.
+- **Backup recoverability proven in isolation:** the 2026-08-03 snapshot restored into a temporary directory — 987/987 manifest checksums verified, `state.db` passes full SQLite `integrity_check`/`quick_check`, memory archive extracts cleanly. Automated backups remain **disabled** (deliberate, post-incident); reactivation awaits owner approval plus a protected `state.db` path (the SQLite online-backup `.backup` API was validated for consistent live capture).
+- **Latest checkpoint:** `2b9beac` — CI green (run 40424133797). Next scheduled validation window: **2026-10-28 04:17 CDT**; its result will be reported as four independent facts (execution, gate result, evidence retention, reboot survival).
+
 The roadmap's numbered phases and reproducibility maturity levels are **separate axes**. Phase 8 in the original roadmap is AWS; the current workstream also uses Phase 8 for the later reproducibility program because the roadmap evolved. See [docs/ROADMAP-STATUS.md](docs/ROADMAP-STATUS.md) and [docs/15-reproducibility/](docs/15-reproducibility/).
 
 The authoritative capability matrix is [docs/career-evidence/capability-matrix.md](docs/career-evidence/capability-matrix.md).
