@@ -28,6 +28,17 @@ authorization case for doing so.
 
 - Do not exceed: 80% Docker VM memory; host free RAM floor 2 GiB; load
   average ceiling 10; Data volume free floor 50 GiB.
+- **Scope of the 50 GiB floor (clarified 2026-10-30, ADR-0011-adjacent):
+  it is a deployment-specific prerequisite of the full disposable
+  reconstruction workload** (enforced by `bootstrap/bootstrap.sh`, which
+  the reconstruction runner executes as its first stage). Other
+  workstreams do not inherit this number; each carries its own measured
+  criteria — e.g. the reconstruction runner's memory gate (free-mem ≥35%,
+  pressure NORMAL, pageout-activity bound) for any k3s/coexistence work,
+  externally hosted GitHub Actions CI (no local disk requirement), and
+  documentation/analysis work (no resource floor). Capacity-independent
+  workstreams must still respect the coexistence rule: no action may
+  degrade the protected fleet.
 - Any workload that would breach a threshold enters WAITING_FOR_RESOURCES
   (this rule becomes the AI resource gate of spec §5/§77).
 - Measurements recorded per phase into ../01-discovery/resource-baseline.md
