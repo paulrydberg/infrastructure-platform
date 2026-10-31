@@ -53,7 +53,7 @@ baselines are measured and documented in
 | Phase 4 — CI/CD | ✅ Complete — deterministic GitHub Actions validation/build pipeline |
 | Phase 5A — GitOps | ✅ Complete — Argo CD control loop, drift self-heal, failure/recovery |
 | Phase 6 — Observability | 🔬 Capacity analysis + Tier-A metrics-server experiment completed; rolled back after a conservative resource gate; no persistent observability stack retained |
-| Platform intelligence (PI-1/3/4/5) | ✅ Deterministic collector, readiness evaluator, drift detector, and evidence-bundle builder implemented and tested (ADR-0012) — **no resident monitoring stack, no recurring snapshots, and no live drift detection are active**; scheduling and live validation are authorization-gated. PI-2/PI-6 unlock is gated on a machine-checkable evidence-window verdict (`bootstrap/evidence_window_validator.py`), not elapsed time |
+| Platform intelligence (PI-1/3/4/5) | ✅ Deterministic collector, readiness evaluator, drift detector, and evidence-bundle builder implemented and tested (ADR-0012 **ACCEPTED 2026-10-31**). PI-1 hourly snapshots **ACTIVE since 2026-10-31T03:17:01Z** (deterministic-only execution audited: stdlib-only, local read-only commands, zero inference/network). **No resident monitoring stack; no live drift detection** — scheduling and live validation remain authorization-gated where applicable. PI-2/PI-6 unlock is gated on a machine-checkable evidence-window verdict (`bootstrap/evidence_window_validator.py`), not elapsed time |
 | Phase 7 — Security | ✅ Complete — CI scanning, SBOM, deterministic policy evaluation and enforcement |
 | Phase 8 / Maturity Level 3 | ✅ Complete — deterministic platform reconstruction |
 | Phase 8 / Maturity Level 4 | ✅ Complete — GitOps-layer reconstruction with failure injection and recovery |
@@ -64,8 +64,8 @@ baselines are measured and documented in
 | AWS / Terraform/OpenTofu / local-to-cloud promotion | 📋 Deferred — no current demonstrated requirement |
 | Persistent observability stack | 📋 Deferred — no demonstrated diagnostic need and memory remains the binding constraint |
 | AI operations | 📋 Deferred — deterministic boundaries have not yet required LLM inference |
-| PI-1 recurring snapshots | ⏸️ Proposed, not activated — `docs/09-observability/pi1-scheduling-proposal.md`; awaiting operator authorization (no cron entry exists) |
-| PI-2 / PI-6 (forecast, reporting) | ⏸️ Dependent on the PI-1 observation period — requires recurring snapshots AND the evidence-quality criteria in the scheduling proposal |
+| PI-1 recurring snapshots | ✅ **ACTIVE** — hourly at :17, installed 2026-10-31 after deterministic-only execution audit; first scheduled run verified 2026-10-31T03:17:01Z; observation window started (see `docs/09-observability/pi1-scheduling-proposal.md` for contract + rollback) |
+| PI-2 / PI-6 (forecast, reporting) | ⏸️ Blocked pending qualification — requires the 14-day minimum window AND machine-checked criteria (coverage ≥90%, schema-valid ≥95%, gaps ≤6 h, threshold stability) via `evidence_window_validator.py`; snapshots alone do not qualify them |
 | PI-4 live drift-injection validation | ⏸️ Synthetic validation complete (29/29); live injection requires authorization |
 
 ### Recent progress (verified 2026-10-26/27 — see [docs/ROADMAP-STATUS.md](docs/ROADMAP-STATUS.md) for the evidence trail)
@@ -95,9 +95,10 @@ The authoritative capability matrix is [docs/career-evidence/capability-matrix.m
 | Operating instructions (per-session rules) | [`docs/OPERATING-INSTRUCTIONS.md`](docs/OPERATING-INSTRUCTIONS.md) |
 | Platform-intelligence capability roadmap (PI-1…PI-8) | [`docs/09-observability/platform-intelligence-capability-roadmap.md`](docs/09-observability/platform-intelligence-capability-roadmap.md) |
 | Observability architecture assessment (Phase 6) | [`docs/09-observability/observability-architecture-assessment-2026-10-30.md`](docs/09-observability/observability-architecture-assessment-2026-10-30.md) |
-| PI-1 snapshot scheduling proposal (not activated) | [`docs/09-observability/pi1-scheduling-proposal.md`](docs/09-observability/pi1-scheduling-proposal.md) |
-| ADR-0012 platform-intelligence foundation (PROPOSED) | [`docs/decisions/ADR-0012-platform-intelligence-foundation.md`](docs/decisions/ADR-0012-platform-intelligence-foundation.md) |
-| ADR-0012 technical review (recommendation: ACCEPT) | [`docs/decisions/adr0012-review-2026-10-31.md`](docs/decisions/adr0012-review-2026-10-31.md) |
+| PI-1 snapshot scheduling proposal (ACTIVATED 2026-10-31) | [`docs/09-observability/pi1-scheduling-proposal.md`](docs/09-observability/pi1-scheduling-proposal.md) |
+| ADR-0012 platform-intelligence foundation (**ACCEPTED 2026-10-31**) | [`docs/decisions/ADR-0012-platform-intelligence-foundation.md`](docs/decisions/ADR-0012-platform-intelligence-foundation.md) |
+| ADR-0012 technical review (recommendation ACCEPT, executed) | [`docs/decisions/adr0012-review-2026-10-31.md`](docs/decisions/adr0012-review-2026-10-31.md) |
+| Deterministic-only execution contract (binding for scheduled paths) | [`docs/09-observability/deterministic-execution-contract.md`](docs/09-observability/deterministic-execution-contract.md) |
 
 ## Repository architecture
 

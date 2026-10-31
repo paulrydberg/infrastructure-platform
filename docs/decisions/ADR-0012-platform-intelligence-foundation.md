@@ -1,9 +1,11 @@
 # ADR-0012: Platform-Intelligence Foundation — Deterministic Collectors Before Resident Stacks
 
-**Status:** PROPOSED (adopted as working direction by the 2026-10-30 CTO
-directive; final ACCEPTANCE gated on Paul's review)
-**Date:** 2026-10-30
-**Deciders:** Paul (directive scope) with Hermes CTO analysis
+**Status:** ACCEPTED (2026-10-31) — explicitly authorized by Paul in the
+2026-10-31 operator session. Previously PROPOSED (adopted as working
+direction by the 2026-10-30 CTO directive; final acceptance gated on
+Paul's review).
+**Date:** 2026-10-30 (proposed) / 2026-10-31 (accepted, operator-authorized)
+**Deciders:** Paul (directive scope and acceptance) with Hermes CTO analysis
 
 ## Context
 

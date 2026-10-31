@@ -1,9 +1,13 @@
-# PI-1 Snapshot Scheduling Proposal (authorization-gated, NOT ACTIVATED)
+# PI-1 Snapshot Scheduling Proposal (ACCEPTED + ACTIVATED 2026-10-31)
 
-**Status:** PROPOSED — awaiting operator authorization for activation.
-Nothing on the live host schedules this; no cron entry exists. The wrapper
-(`bootstrap/pi1-snapshot-cron.sh`) is committed, tested (one manual run +
-second-run check), and inert until a crontab line is added.
+**Status:** **ACTIVATED 2026-10-31** — operator-authorized after a passing
+deterministic-only execution audit (`deterministic-execution-contract.md`).
+Installed: hourly at :17 (the exact line below). First scheduled execution
+verified 2026-10-31T03:17:01Z. Rollback: `crontab -l | grep -v pi1-snapshot | crontab -`.
+The wrapper
+(`bootstrap/pi1-snapshot-cron.sh`) is committed and tested; when this
+document was first written the wrapper was inert — it is now installed on
+the live host.
 
 ## Why the existing system scheduler
 
@@ -57,7 +61,7 @@ period** — a calendar fortnight alone does not unlock them.
   STALE_EVIDENCE snapshots are reported as stale, not as current.
 - PI-5 (bundles) may reference snapshot files as evidence sources.
 
-## What activation requires (operator decision)
+## What activation requires (operator decision) — **DONE 2026-10-31**
 
 ```cron
 # infrastructure-platform: PI-1 platform-state snapshot (deterministic; no inference)
