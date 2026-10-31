@@ -66,7 +66,7 @@ baselines are measured and documented in
 | AI operations | 📋 Deferred — deterministic boundaries have not yet required LLM inference |
 | PI-1 recurring snapshots | ⏸️ Proposed, not activated — `docs/09-observability/pi1-scheduling-proposal.md`; awaiting operator authorization (no cron entry exists) |
 | PI-2 / PI-6 (forecast, reporting) | ⏸️ Dependent on the PI-1 observation period — requires recurring snapshots AND the evidence-quality criteria in the scheduling proposal |
-| PI-4 live drift-injection validation | ⏸️ Synthetic validation complete (21/21); live injection requires authorization |
+| PI-4 live drift-injection validation | ⏸️ Synthetic validation complete (29/29); live injection requires authorization |
 
 ### Recent progress (verified 2026-10-26/27 — see [docs/ROADMAP-STATUS.md](docs/ROADMAP-STATUS.md) for the evidence trail)
 
@@ -93,6 +93,11 @@ The authoritative capability matrix is [docs/career-evidence/capability-matrix.m
 | Reproducibility (contract, reconstruction manifest) | [`docs/15-reproducibility/`](docs/15-reproducibility/) |
 | Roadmap status & session log | [`docs/ROADMAP-STATUS.md`](docs/ROADMAP-STATUS.md) |
 | Operating instructions (per-session rules) | [`docs/OPERATING-INSTRUCTIONS.md`](docs/OPERATING-INSTRUCTIONS.md) |
+| Platform-intelligence capability roadmap (PI-1…PI-8) | [`docs/09-observability/platform-intelligence-capability-roadmap.md`](docs/09-observability/platform-intelligence-capability-roadmap.md) |
+| Observability architecture assessment (Phase 6) | [`docs/09-observability/observability-architecture-assessment-2026-10-30.md`](docs/09-observability/observability-architecture-assessment-2026-10-30.md) |
+| PI-1 snapshot scheduling proposal (not activated) | [`docs/09-observability/pi1-scheduling-proposal.md`](docs/09-observability/pi1-scheduling-proposal.md) |
+| ADR-0012 platform-intelligence foundation (PROPOSED) | [`docs/decisions/ADR-0012-platform-intelligence-foundation.md`](docs/decisions/ADR-0012-platform-intelligence-foundation.md) |
+| ADR-0012 technical review (recommendation: ACCEPT) | [`docs/decisions/adr0012-review-2026-10-31.md`](docs/decisions/adr0012-review-2026-10-31.md) |
 
 ## Repository architecture
 

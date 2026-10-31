@@ -137,6 +137,124 @@ class TestCriteria(unittest.TestCase):
             self.assertEqual(c2["valid"], total - 1)
 
 
+class TestIntegrity(unittest.TestCase):
+    """v1.1.0: explicit handling of anomalous snapshot inputs."""
+
+    def _snap_at(self, ts):
+        return {
+            "schema_version": "1.0.0",
+            "collected_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(ts)),
+            "host": {"free_disk_gib": 28.0},
+            "gates": {"capacity_gate_gib": 50},
+            "provenance": {},
+        }
+
+    def _write_raw(self, tmp, name, obj_or_str):
+        d = Path(tmp) / "snaps"
+        d.mkdir(parents=True, exist_ok=True)
+        p = d / name
+        p.write_text(obj_or_str if isinstance(obj_or_str, str)
+                     else json.dumps(obj_or_str))
+        return d
+
+    def test_30_duplicates_counted_once(self):
+        """Two files with identical collected_at_utc count once for coverage
+        and are flagged as anomalies — never double-credit an hour."""
+        with tempfile.TemporaryDirectory() as tmp:
+            t = NOW - 3600 * 5
+            d = self._write_raw(tmp, "pi1-a.json", self._snap_at(t))
+            (d / "pi1-b.json").write_text(json.dumps(self._snap_at(t)))
+            v, ok = evw.validate_window(d, days=1, now_s=NOW)
+            self.assertEqual(v["snapshot_count"], 1)  # deduped
+            c1 = v["criteria_results"]["c1_coverage"]
+            self.assertLessEqual(c1["coverage"], 1.0)
+            self.assertTrue(any("duplicate" in e for e in v["errors"]))
+
+    def test_31_future_dated_rejected_as_anomaly(self):
+        """A snapshot dated beyond the clock-skew tolerance is a clock
+        anomaly — excluded, flagged, never treated as evidence."""
+        with tempfile.TemporaryDirectory() as tmp:
+            d = self._write_raw(tmp, "pi1-f.json",
+                                self._snap_at(NOW + evw.FUTURE_TOLERANCE_S + 3600))
+            v, ok = evw.validate_window(d, days=1, now_s=NOW)
+            self.assertEqual(v["snapshot_count"], 0)
+            self.assertFalse(ok)
+            self.assertTrue(any("future-dated" in e for e in v["errors"]))
+
+    def test_32_future_dated_within_tolerance_accepted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = self._write_raw(tmp, "pi1-ok.json",
+                                self._snap_at(NOW + evw.FUTURE_TOLERANCE_S - 60))
+            v, ok = evw.validate_window(d, days=1, now_s=NOW)
+            self.assertEqual(v["snapshot_count"], 1)
+            self.assertFalse(any("future-dated" in e for e in v["errors"]))
+
+    def test_33_cutoff_straddle_cannot_exceed_1(self):
+        """Regression: a snapshot 1s inside the window whose hour slot began
+        before the cutoff must not inflate coverage past 1.0 (1.0.0 bug:
+        expected_hours was fixed at days*24 while slots were epoch-derived)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            # now at half-past; window = 1 day; snapshot 1s after cutoff
+            now_hp = (NOW // 3600) * 3600 + 1800
+            d = Path(tmp) / "snaps"
+            d.mkdir()
+            # 25 snapshots in 25 distinct slots spanning the straddle boundary
+            for i in range(25):
+                t = now_hp - 86400 + 1 + 3600 * i
+                (d / f"pi1-{i}.json").write_text(json.dumps(self._snap_at(t)))
+            v, ok = evw.validate_window(d, days=1, now_s=now_hp)
+            c1 = v["criteria_results"]["c1_coverage"]
+            self.assertLessEqual(c1["coverage"], 1.0,
+                                 "coverage must never exceed 1.0")
+            self.assertLessEqual(c1["unique_hours"], c1["expected_hours"])
+
+    def test_34_dst_transition_no_false_gap(self):
+        """US DST spring-forward (2026-03-08): epoch-based slot math must
+        produce neither false gaps nor false continuity across the change."""
+        with tempfile.TemporaryDirectory() as tmp:
+            dst_day = calendar.timegm(time.strptime("2026-03-08", "%Y-%m-%d"))
+            d = Path(tmp) / "snaps"
+            d.mkdir()
+            for h in range(48):  # full day before + through transition
+                t = dst_day + 3600 * h
+                (d / f"pi1-{h}.json").write_text(json.dumps(self._snap_at(t)))
+            v, ok = evw.validate_window(d, days=2, now_s=dst_day + 48 * 3600 + 60)
+            c3 = v["criteria_results"]["c3_gap_discipline"]
+            self.assertEqual(c3["max_gap_s"], 3600)
+            self.assertTrue(c3["pass"])
+
+    def test_35_out_of_order_filenames_sorted_by_timestamp(self):
+        """Glob order is filename order; gap math must use timestamps."""
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp) / "snaps"
+            d.mkdir()
+            offsets = [50, 10, 30, 20, 40]
+            names = ["e", "a", "c", "b", "d"]
+            for nm, off in zip(names, offsets):
+                (d / f"pi1-{nm}.json").write_text(json.dumps(self._snap_at(NOW - 3600 * off)))
+            v, ok = evw.validate_window(d, days=1, now_s=NOW)
+            # sorted by ts: gaps of 10h — must reflect REAL gaps from data
+            self.assertEqual(v["criteria_results"]["c3_gap_discipline"]["max_gap_s"],
+                             10 * 3600)
+
+    def test_36_missing_dir_error_is_actionable(self):
+        """Unreadable dir must surface an explicit error string, not an
+        empty errors list."""
+        v, ok = evw.validate_window("/nonexistent-snaps-dir", days=1, now_s=NOW)
+        self.assertFalse(ok)
+        self.assertTrue(v["errors"])
+        self.assertIn("not found", v["errors"][0])
+
+    def test_37_window_days_min_is_observation_floor_not_proof(self):
+        """The 14-day window is a MINIMUM qualification, not a reliability
+        proof — verdict must carry the window_days it evaluated."""
+        with tempfile.TemporaryDirectory() as tmp:
+            d = self._write_raw(tmp, "pi1-a.json", self._snap_at(NOW - 3600))
+            v, _ = evw.validate_window(d, days=14, now_s=NOW)
+            self.assertEqual(v["window_days"], 14)
+            self.assertIn("note", v)
+
+
 class TestContract(unittest.TestCase):
     def test_20_zero_inference_and_read_only(self):
         with tempfile.TemporaryDirectory() as tmp:

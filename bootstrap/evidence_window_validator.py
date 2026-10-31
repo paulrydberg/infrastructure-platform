@@ -26,12 +26,13 @@ import sys
 import time
 from pathlib import Path
 
-VALIDATOR_VERSION = "1.0.0"
+VALIDATOR_VERSION = "1.1.0"
 
 # Criteria (documented in pi1-scheduling-proposal.md; mirrors ADR-0012 review)
 COVERAGE_MIN = 0.90          # C1: ≥90% of expected hourly slots present
 SCHEMA_VALID_MIN = 0.95      # C2: ≥95% snapshots structurally valid
 MAX_GAP_S = 6 * 3600         # C3: no gap > 6 h between consecutive snapshots
+FUTURE_TOLERANCE_S = 300     # clock skew tolerance before "future-dated" reject
 # C4: capacity_gate_gib must be a single distinct value across the window
 
 
@@ -42,15 +43,20 @@ def _parse_utc(ts):
         return None
 
 
-def _load_snapshots(dirpath, days):
+def _load_snapshots(dirpath, days, now_s=None):
     """Load snapshots within the trailing N-day window.
-    Returns (records, malformed) — both are evidence."""
+    Returns (records, malformed) — both are evidence.
+    Duplicates (identical collected_at_utc from different files) are counted
+    ONCE for coverage/gaps but all are retained for schema-validity counting;
+    future-dated snapshots (ts > now + FUTURE_TOLERANCE_S) are rejected as
+    clock anomalies, never treated as evidence."""
     d = Path(dirpath)
     if not d.is_dir():
         return None, [f"snapshot dir not found: {d}"]
-    now = calendar.timegm(time.gmtime())
+    now = now_s if now_s is not None else calendar.timegm(time.gmtime())
     cutoff = now - days * 86400
     records, malformed = [], []
+    seen_ts = set()
     for p in sorted(d.glob("pi1-*.json")):
         try:
             rec = json.loads(p.read_text())
@@ -61,7 +67,19 @@ def _load_snapshots(dirpath, days):
         if ts is None:
             malformed.append({"file": p.name, "error": "unparseable collected_at_utc"})
             continue
+        if ts > now + FUTURE_TOLERANCE_S:
+            malformed.append({"file": p.name,
+                              "error": f"future-dated ({ts - now}s ahead) — "
+                                       f"clock anomaly, excluded"})
+            continue
         if ts >= cutoff:
+            if ts in seen_ts:
+                malformed.append({"file": p.name,
+                                  "error": f"duplicate timestamp "
+                                           f"({rec.get('collected_at_utc')}) — "
+                                           f"counted once"})
+                continue
+            seen_ts.add(ts)
             records.append({"file": p.name, "ts": ts, "record": rec})
     return records, malformed
 
@@ -69,7 +87,8 @@ def _load_snapshots(dirpath, days):
 def validate_window(dirpath, days=14, now_s=None):
     """Evaluate the quality criteria. Deterministic; no inference."""
     errors = []
-    records, malformed = _load_snapshots(dirpath, days)
+    now = now_s if now_s is not None else calendar.timegm(time.gmtime())
+    records, malformed = _load_snapshots(dirpath, days, now_s=now)
     if records is None:
         # _load_snapshots returns ([], [error]) for unreadable dir — surface it
         dir_errors = [e if isinstance(e, str) else
@@ -89,10 +108,17 @@ def validate_window(dirpath, days=14, now_s=None):
 
     now = now_s if now_s is not None else calendar.timegm(time.gmtime())
     n = len(records)
-
-    # C1 — coverage: unique hourly slots vs expected slots in window
+    # C1 — coverage: unique hourly slots vs expected slots in window.
+    # Window bounds are SLOT-ALIGNED to the cutoff so a snapshot taken just
+    # inside the window whose hour slot began before the cutoff cannot
+    # inflate coverage beyond 1.0 (cutoff-straddle overcount, found in
+    # 1.0.0 probing).
+    window_start = now - days * 86400
+    window_end = now
+    slot_lo = window_start // 3600           # first slot partially in window
+    slot_hi = (window_end - 1) // 3600       # last slot partially in window
+    expected_hours = slot_hi - slot_lo + 1
     hours = sorted({r["ts"] // 3600 for r in records})
-    expected_hours = days * 24
     coverage = (len(hours) / expected_hours) if expected_hours else 0.0
     c1_pass = coverage >= COVERAGE_MIN
 
@@ -142,8 +168,9 @@ def validate_window(dirpath, days=14, now_s=None):
     }
     qualified = c1_pass and c2_pass and c3_pass and c4_pass and n > 0
     if malformed:
-        errors.append(f"{len(malformed)} malformed snapshot(s) excluded: "
-                      + ", ".join(m["file"] for m in malformed[:5]))
+        errors.append(f"{len(malformed)} malformed/anomalous snapshot(s): "
+                      + "; ".join(f"{m['file']}: {m['error']}"
+                                  for m in malformed[:10]))
 
     verdict = {
         "window_qualified": qualified,

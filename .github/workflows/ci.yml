@@ -33,6 +33,18 @@ jobs:
           find . -name '*.py' -print0 | xargs -0 -n1 python3 -m py_compile
           echo "all python files compile"
 
+      - name: platform-intelligence unit tests (deterministic, synthetic)
+        run: |
+          # PI tool suites: synthetic fixtures only, no live infrastructure.
+          # A red suite blocks merge exactly like any other gate.
+          set -e
+          python3 bootstrap/evidence-window-validator-tests.py
+          python3 bootstrap/pi4-drift-detector-tests.py
+          python3 bootstrap/platform-state-collector-tests.py
+          python3 bootstrap/deployment-readiness-tests.py
+          python3 bootstrap/evidence-bundle-tests.py
+          echo "all platform-intelligence suites passed"
+
       - name: compose config validation
         run: |
           found=0
