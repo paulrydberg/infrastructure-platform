@@ -31,12 +31,13 @@ Exit codes: 0 evaluated (verdict may be DRIFT); 2 input error.
 """
 import argparse
 import calendar
+import hashlib
 import json
 import sys
 import time
 from pathlib import Path
 
-DETECTOR_VERSION = "1.0.0"
+DETECTOR_VERSION = "1.1.0"
 SCHEMA_VERSION = "1.0.0"
 
 # ── Declared-field contract ────────────────────────────────────────────────
@@ -110,11 +111,14 @@ def _age_s(record, now_s=None):
     return max(0, now - calendar.timegm(t))
 
 
+_MISSING = object()  # sentinel: field absent — distinct from an explicit null
+
+
 def _get_path(d, path):
     cur = d
     for k in path:
         if not isinstance(cur, dict) or k not in cur:
-            return None, True  # missing
+            return _MISSING, True  # absent
         cur = cur[k]
     return cur, False
 
@@ -134,7 +138,6 @@ def compare(baseline, observed, now_s=None, max_age_s=900):
         errors.append(f"observed: {'; '.join(oerrs)}")
     if errors:
         return _verdict(VERDICT_INSUFFICIENT, errors, baseline, observed)
-
     if baseline.get("schema_version") != SCHEMA_VERSION or \
        observed.get("schema_version") != SCHEMA_VERSION:
         return _verdict(VERDICT_SCHEMA,
@@ -161,6 +164,8 @@ def compare(baseline, observed, now_s=None, max_age_s=900):
     for name, path in sorted(DECLARED_FIELDS.items()):
         bval, bmiss = _get_path(b_state, path)
         oval, omiss = _get_path(o_state, path)
+        # An explicit null VALUE is data; an ABSENT field is missing evidence.
+        # null vs absent must never report MATCH (it would conceal change).
         rec = {"field": name,
                "declared": None if bmiss else bval,
                "observed": None if omiss else oval}
@@ -182,12 +187,29 @@ def compare(baseline, observed, now_s=None, max_age_s=900):
                     drifts=drifts, incomparable=incomparable)
 
 
+def baseline_identity(baseline):
+    """Deterministic content hash over the declared state (canonical JSON).
+    Versioned baseline identity: same declared content ⇒ same id, regardless
+    of unrelated metadata (timestamps, labels). None if baseline unusable."""
+    if not isinstance(baseline, dict):
+        return None
+    state = baseline.get("state")
+    if not isinstance(state, dict):
+        return None
+    try:
+        canon = json.dumps(state, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canon.encode()).hexdigest()
+    except (TypeError, ValueError):
+        return None
+
+
 def _verdict(verdict, errors, baseline, observed, fields=None, drifts=None,
              incomparable=None):
     return {
         "verdict": verdict,
         "detector_version": DETECTOR_VERSION,
         "schema_version": SCHEMA_VERSION,
+        "baseline_id": baseline_identity(baseline),
         "evaluated_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "baseline_collected_at_utc": (baseline or {}).get("collected_at_utc"),
         "observed_collected_at_utc": (observed or {}).get("collected_at_utc"),

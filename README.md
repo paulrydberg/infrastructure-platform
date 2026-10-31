@@ -53,7 +53,7 @@ baselines are measured and documented in
 | Phase 4 — CI/CD | ✅ Complete — deterministic GitHub Actions validation/build pipeline |
 | Phase 5A — GitOps | ✅ Complete — Argo CD control loop, drift self-heal, failure/recovery |
 | Phase 6 — Observability | 🔬 Capacity analysis + Tier-A metrics-server experiment completed; rolled back after a conservative resource gate; no persistent observability stack retained |
-| Platform intelligence (PI-1/3/4/5) | ✅ Deterministic collector, readiness evaluator, drift detector, and evidence-bundle builder implemented and tested (ADR-0012) — **no resident monitoring stack, no recurring snapshots, and no live drift detection are active**; scheduling and live validation are authorization-gated |
+| Platform intelligence (PI-1/3/4/5) | ✅ Deterministic collector, readiness evaluator, drift detector, and evidence-bundle builder implemented and tested (ADR-0012) — **no resident monitoring stack, no recurring snapshots, and no live drift detection are active**; scheduling and live validation are authorization-gated. PI-2/PI-6 unlock is gated on a machine-checkable evidence-window verdict (`bootstrap/evidence_window_validator.py`), not elapsed time |
 | Phase 7 — Security | ✅ Complete — CI scanning, SBOM, deterministic policy evaluation and enforcement |
 | Phase 8 / Maturity Level 3 | ✅ Complete — deterministic platform reconstruction |
 | Phase 8 / Maturity Level 4 | ✅ Complete — GitOps-layer reconstruction with failure injection and recovery |

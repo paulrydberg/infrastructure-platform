@@ -7,9 +7,11 @@ fail-closed semantics, zero-inference contract.
 """
 import importlib.util
 import json
+import os
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -59,8 +61,59 @@ class TestBuildBundle(unittest.TestCase):
         self.assertTrue((mdir / "manifest.json").is_file())
         self.assertGreaterEqual(len(m["files"]), 5)
         for f in m["files"]:
-            self.assertIn(f["status"], ("ok", "probe_failed", "malformed_output"))
+            self.assertIn(f["status"], ("ok", "probe_failed", "malformed_output",
+                                        "skipped_no_inputs"))
             self.assertEqual(len(f["sha256"]), 64)
+
+    def test_10b_drift_probe_explicit_skip_without_inputs(self):
+        """Without PI4_BASELINE/PI4_OBSERVED the drift probe records an
+        explicit skip — never silent absence from the bundle."""
+        mdir = self.tmp / "bundle-skip"
+        m, errs = ebb.build_bundle(mdir, "skip-test")
+        self.assertEqual(errs, [])
+        drift = [f for f in m["files"] if f["probe"] == "pi4_drift_verdict"]
+        self.assertEqual(len(drift), 1)
+        self.assertEqual(drift[0]["status"], "skipped_no_inputs")
+
+    def test_10c_drift_probe_embeds_verdict_with_inputs(self):
+        """With both PI4 env inputs set, the drift verdict is embedded."""
+        b = self.tmp / "b.json"
+        o = self.tmp / "o.json"
+        b.write_text(json.dumps({
+            "schema_version": "1.0.0", "record_type": "declared_state",
+            "collected_at_utc": "2026-10-30T12:00:00Z",
+            "state": {"replicas": 1, "image_tag": "0.1.0",
+                      "resources": {"limits": {"memory": "64Mi", "cpu": "200m"}},
+                      "security_context": {"run_as_non_root": True,
+                                           "read_only_root_filesystem": True}}}))
+        o.write_text(json.dumps({
+            "schema_version": "1.0.0", "record_type": "observed_state",
+            "collected_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "state": {"replicas": 7, "image_tag": "0.1.0",
+                      "resources": {"limits": {"memory": "64Mi", "cpu": "200m"}},
+                      "security_context": {"run_as_non_root": True,
+                                           "read_only_root_filesystem": True}}}))
+        mdir = self.tmp / "bundle-drift"
+        old_b = os.environ.get("PI4_BASELINE")
+        old_o = os.environ.get("PI4_OBSERVED")
+        os.environ["PI4_BASELINE"] = str(b)
+        os.environ["PI4_OBSERVED"] = str(o)
+        try:
+            m, errs = ebb.build_bundle(mdir, "drift-test")
+        finally:
+            if old_b is None: os.environ.pop("PI4_BASELINE", None)
+            else: os.environ["PI4_BASELINE"] = old_b
+            if old_o is None: os.environ.pop("PI4_OBSERVED", None)
+            else: os.environ["PI4_OBSERVED"] = old_o
+        self.assertEqual(errs, [])
+        drift = [f for f in m["files"] if f["probe"] == "pi4_drift_verdict"]
+        self.assertEqual(len(drift), 1)
+        self.assertEqual(drift[0]["status"], "ok")
+        # verdict content lives inside the evidence file, not the manifest row
+        evfile = mdir / drift[0]["file"]
+        verdict_record = json.loads(evfile.read_text())
+        self.assertEqual(verdict_record["verdict"], "DRIFT")
+        self.assertTrue(verdict_record["baseline_id"])
 
     def test_11_bundle_never_reports_pass_when_probes_failed(self):
         """A failed probe forces collection_status away from 'complete'."""

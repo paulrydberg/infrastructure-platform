@@ -169,6 +169,74 @@ class TestContract(unittest.TestCase):
         self.assertIn("status", v["runtime_variation_excluded"])
 
 
+class TestBaselineIdentity(unittest.TestCase):
+    def test_32_baseline_id_present_and_deterministic(self):
+        v1 = dd.compare(_declared(), _observed(), now_s=NOW)
+        v2 = dd.compare(_declared(), _observed(), now_s=NOW)
+        self.assertTrue(v1["baseline_id"])
+        self.assertEqual(v1["baseline_id"], v2["baseline_id"])
+
+    def test_33_baseline_id_ignores_metadata(self):
+        """Same declared content, different timestamps/labels ⇒ same id."""
+        b1 = _declared(collected_at_utc="2026-10-30T12:00:00Z")
+        b2 = _declared(collected_at_utc="2026-11-01T00:00:00Z", label="x")
+        self.assertEqual(dd.baseline_identity(b1), dd.baseline_identity(b2))
+
+    def test_34_baseline_id_changes_with_content(self):
+        b1 = _declared()
+        b2 = _declared(state={"replicas": 3})
+        self.assertNotEqual(dd.baseline_identity(b1), dd.baseline_identity(b2))
+
+    def test_35_baseline_id_null_on_unusable(self):
+        self.assertIsNone(dd.baseline_identity(None))
+        self.assertIsNone(dd.baseline_identity({"state": "not-a-dict"}))
+        self.assertIsNone(dd.baseline_identity({"no_state": True}))
+        self.assertIsNone(dd.baseline_identity({"state": {"x": {1, 2}}}))  # unserializable
+
+    def test_36_null_vs_absent_is_drift_not_match(self):
+        """A field explicitly set to null vs a PRESENT baseline value must be
+        DRIFT, and value-vs-absent must be INCOMPARABLE — never a silent MATCH
+        (the 1.0.0 detector conflated None with absent)."""
+        # baseline has image_tag="0.1.0"; observed explicitly nulls it
+        v = dd.compare(_declared(), _observed(state={"image_tag": None}), now_s=NOW)
+        self.assertEqual(v["verdict"], "DRIFT")
+        self.assertIn("deployment.image_tag", v["drifted_fields"])
+
+    def test_37_value_vs_absent_field_is_insufficient(self):
+        b = _declared()
+        o_state = {
+            "replicas": 1, "image_tag": "0.1.0",
+            "resources": {"limits": {"memory": "64Mi", "cpu": "200m"}},
+            "security_context": {"run_as_non_root": True,
+                                 "read_only_root_filesystem": True},
+        }
+        del o_state["resources"]["limits"]["cpu"]  # absent in observed
+        o = _observed(state=o_state)
+        # rebuild observed record without cpu
+        o = {"schema_version": "1.0.0", "record_type": "observed_state",
+             "collected_at_utc": _observed()["collected_at_utc"], "state": o_state}
+        v = dd.compare(b, o, now_s=NOW)
+        self.assertEqual(v["verdict"], "INSUFFICIENT_DATA")
+        self.assertIn("deployment.cpu_limit", v["incomparable_fields"])
+
+    def test_38_null_matches_null(self):
+        """null vs null is a legitimate MATCH (same declared content)."""
+        b = _declared(state={"image_tag": None})
+        o = _observed(state={"image_tag": None})
+        v = dd.compare(b, o, now_s=NOW)
+        rec = [f for f in v["compared_fields"] if f["field"] == "deployment.image_tag"][0]
+        self.assertEqual(rec["comparison"], "MATCH")
+
+    def test_39_repeatability_same_inputs_same_verdict(self):
+        """Full verdict equality modulo evaluated_at_utc (deterministic engine)."""
+        import copy
+        b, o = _declared(), _observed(state={"replicas": 2})
+        v1 = dd.compare(copy.deepcopy(b), copy.deepcopy(o), now_s=NOW)
+        v2 = dd.compare(copy.deepcopy(b), copy.deepcopy(o), now_s=NOW)
+        v1.pop("evaluated_at_utc"); v2.pop("evaluated_at_utc")
+        self.assertEqual(v1, v2)
+
+
 class TestCli(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp(prefix="pi4-cli-"))

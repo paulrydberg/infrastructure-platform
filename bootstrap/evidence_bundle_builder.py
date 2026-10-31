@@ -14,16 +14,20 @@ Exit codes: 0 bundle complete (may contain failed probes, recorded);
 """
 import hashlib
 import json
+import os
 import subprocess
 import sys
 import time
 from pathlib import Path
 
-BUNDLER_VERSION = "1.0.0"
+BUNDLER_VERSION = "1.1.0"
 SCHEMA_VERSION = "1.0.0"
 
 # Reuse PI-1 collector as the platform-state evidence source (same directory)
 COLLECTOR = Path(__file__).resolve().parent / "platform_state_collector.py"
+# PI-4 drift detector: optional probe — if a baseline+observed pair exists in
+# the bundle inputs dir (or is passed), its verdict is embedded as evidence.
+DRIFT_DETECTOR = Path(__file__).resolve().parent / "drift_detector.py"
 
 
 def _run(cmd, timeout=120):
@@ -108,6 +112,49 @@ def collect_evidence(label):
     ]
     for name, cmd in probes:
         evidence.append(_probe(name, cmd))
+
+    # PI-4 drift verdict probe (optional inputs — absence is recorded, not fatal)
+    baseline = Path(os.environ.get("PI4_BASELINE", ""))
+    observed = Path(os.environ.get("PI4_OBSERVED", ""))
+    if baseline.is_file() and observed.is_file() and DRIFT_DETECTOR.is_file():
+        rc, out, err = _run([sys.executable, str(DRIFT_DETECTOR),
+                             "--baseline", str(baseline),
+                             "--observed", str(observed)], timeout=120)
+        try:
+            verdict = json.loads(out)
+            evidence.append({
+                "probe": "pi4_drift_verdict",
+                "command": [str(DRIFT_DETECTOR), "--baseline", str(baseline),
+                            "--observed", str(observed)],
+                "exit_code": rc,
+                "status": "ok" if rc == 0 and verdict.get("verdict") else "malformed_output",
+                "stdout": json.dumps(verdict)[:20000],
+                "stderr": (err or "")[:2000],
+                "collected_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "verdict": verdict.get("verdict"),
+                "baseline_id": verdict.get("baseline_id"),
+            })
+        except json.JSONDecodeError as e:
+            evidence.append({
+                "probe": "pi4_drift_verdict",
+                "command": [str(DRIFT_DETECTOR), "--baseline", str(baseline),
+                            "--observed", str(observed)],
+                "exit_code": rc, "status": "malformed_output",
+                "stdout": out[:2000], "stderr": (err or str(e))[:2000],
+                "collected_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            })
+    else:
+        evidence.append({
+            "probe": "pi4_drift_verdict",
+            "command": [],
+            "exit_code": 0,
+            "status": "skipped_no_inputs",
+            "stdout": "",
+            "stderr": "",
+            "collected_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "note": "PI4_BASELINE/PI4_OBSERVED not both set — drift verdict "
+                    "not collected (explicit skip, not silence)",
+        })
 
     return evidence, errors
 
