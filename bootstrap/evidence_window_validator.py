@@ -166,7 +166,8 @@ def validate_window(dirpath, days=14, now_s=None):
         "c4_threshold_stability": {"pass": c4_pass,
                                    "distinct_values": sorted(thresholds, key=str)},
     }
-    qualified = c1_pass and c2_pass and c3_pass and c4_pass and n > 0
+    qualified = (c1_pass and c2_pass and c3_pass and c4_pass and n > 0
+                 and not malformed)
     if malformed:
         errors.append(f"{len(malformed)} malformed/anomalous snapshot(s): "
                       + "; ".join(f"{m['file']}: {m['error']}"

@@ -255,6 +255,35 @@ class TestIntegrity(unittest.TestCase):
             self.assertIn("note", v)
 
 
+    def test_38_anomaly_disqualifies_window(self):
+        """Duplicates/future-dated snapshots are flagged AND disqualify the
+        window — anomalous collections can never quietly qualify PI-2/PI-6.
+        Probe errors (nulls) are data per ADR-0012 and do NOT disqualify."""
+        with tempfile.TemporaryDirectory() as tmp:
+            # duplicate
+            d = Path(tmp) / "s1"; d.mkdir()
+            t = NOW - 3600 * 5
+            (d / "pi1-a.json").write_text(json.dumps(self._snap_at(t)))
+            (d / "pi1-b.json").write_text(json.dumps(self._snap_at(t)))
+            v, ok = evw.validate_window(d, days=1, now_s=NOW)
+            self.assertFalse(ok)
+            # future-dated
+            d = Path(tmp) / "s2"; d.mkdir()
+            (d / "pi1-f.json").write_text(json.dumps(
+                self._snap_at(NOW + evw.FUTURE_TOLERANCE_S + 3600)))
+            v, ok = evw.validate_window(d, days=1, now_s=NOW)
+            self.assertFalse(ok)
+            # probe errors (nulls) — data, not anomaly; must NOT disqualify
+            d = Path(tmp) / "s3"; d.mkdir()
+            snap = self._snap_at(NOW - 3600)
+            snap["host"]["swap_used_mib"] = None
+            snap["provenance"] = {"probe_errors": ["docker system df failed"]}
+            (d / "pi1-ok.json").write_text(json.dumps(snap))
+            v, ok = evw.validate_window(d, days=1, now_s=NOW)
+            self.assertFalse(v["errors"] and
+                             any("malformed/anomalous" in e for e in v["errors"]))
+
+
 class TestContract(unittest.TestCase):
     def test_20_zero_inference_and_read_only(self):
         with tempfile.TemporaryDirectory() as tmp:

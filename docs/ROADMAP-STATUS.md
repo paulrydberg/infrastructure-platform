@@ -485,4 +485,20 @@ project-owned state). L7, dependency automation, AWS, observability,
 AI: deliberately deferred (conditions in level6-completion-record.md
 and ADR-0007).
 
+**2026-10-31 post-activation verification (operator-directed):** local and
+remote `main` both at `067fe3e`, tree clean, CI `41164324177` success. The
+pi1-scheduling-proposal.md file-mutation-verifier warning was investigated
+by reading the file directly: the committed content already reflected the
+activated status (title + status line), first-verified run timestamp, the
+exact installed cron line, and rollback — **no correction needed**. The
+observation-window start 2026-10-31T03:17:01Z is mutually consistent
+across README, roadmap, and ROADMAP-STATUS; ADR-0012 shows ACCEPTED
+everywhere referenced. Evidence-window safety probes then found one real
+gap: duplicate/future-dated snapshots were flagged in `errors` but did not
+disqualify the window (`qualified` ignored `malformed`). Fixed in
+`evidence_window_validator.py`: any flagged anomaly now disqualifies the
+window outright (an anomalous collection can never quietly qualify
+PI-2/PI-6), with regression test (`test_38_anomaly_disqualifies_window`,
+20/20). Probe errors (nulls) remain data per ADR-0012 and do not
+disqualify. Thresholds unchanged (0.90/0.95/6 h/stability); live window
 **2026-10-31 ADR-0012 ACCEPTED + PI-1 cron ACTIVATED (operator-authorized, this session):** Paul explicitly accepted ADR-0012 (status PROPOSED → ACCEPTED in the ADR file; decision brief preserved with a post-review addendum). Acceptance was conditional on a deterministic-only execution audit of the scheduled PI-1 path, which PASSED and is now a binding contract (`docs/09-observability/deterministic-execution-contract.md`): audit verified stdlib-only imports (`json/re/subprocess/sys/time/pathlib`), a subprocess allowlist of exactly `df`/`sysctl`/`docker` (local read-only host interfaces incl. `docker exec k3s-server kubectl get pods`), zero network/inference primitives in any cron-reachable file (whole-file scan CLEAN; the only "llm" strings are the `llm_inference_required: 0` contract field), no credential dependence, no silent fallback, and structural reproducibility (two consecutive collector runs hash identically modulo timestamps). The hourly cron (`17 * * * * …/pi1-snapshot-cron.sh`) was installed 2026-10-31 22:08 CDT after: pre-install crontab re-verification (0 existing PI-1 entries), timestamped backup (`~/crontab-backup-20261030220721.txt`), writability + executable-permission checks, and diff-verified installation (exactly one added entry, all 8 pre-existing lines preserved verbatim). **First scheduled execution verified live at 2026-10-31T03:17:01Z** (22:17:01 CDT): schema-valid snapshot, cron log `ok`, probe_errors visible. Honest note: that first run coincided with a Docker daemon gap — swap/docker/k3s probes recorded as explicit errors with nulls (probe failure is data per ADR-0012); the immediately-following manual run collected fully clean (42 GiB free, swap 11454/12288 MiB, k3s RSS 1.139/1.5 GiB, zero probe_errors), proving the failure path is visible and does not fabricate success. **Observation window STARTED 2026-10-31T03:17:01Z.** The validator recognizes scheduled snapshots (n=3 at first check, window_qualified=false as expected). **PI-2 and PI-6 remain BLOCKED** until the 14-day minimum window passes all machine-checked criteria (coverage ≥90%, schema-valid ≥95%, gaps ≤6 h, threshold stability) — unchanged thresholds. Rollback: `crontab -l | grep -v pi1-snapshot | crontab -`. Qwen36 source untouched; no live drift injection; no services deployed; Ubuntu laptop and external bay remain off and untouched.
