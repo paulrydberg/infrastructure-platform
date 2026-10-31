@@ -53,6 +53,7 @@ baselines are measured and documented in
 | Phase 4 — CI/CD | ✅ Complete — deterministic GitHub Actions validation/build pipeline |
 | Phase 5A — GitOps | ✅ Complete — Argo CD control loop, drift self-heal, failure/recovery |
 | Phase 6 — Observability | 🔬 Capacity analysis + Tier-A metrics-server experiment completed; rolled back after a conservative resource gate; no persistent observability stack retained |
+| Platform intelligence (PI-1/3/4/5) | ✅ Deterministic collector, readiness evaluator, drift detector, and evidence-bundle builder implemented and tested (ADR-0012) — **no resident monitoring stack, no recurring snapshots, and no live drift detection are active**; scheduling and live validation are authorization-gated |
 | Phase 7 — Security | ✅ Complete — CI scanning, SBOM, deterministic policy evaluation and enforcement |
 | Phase 8 / Maturity Level 3 | ✅ Complete — deterministic platform reconstruction |
 | Phase 8 / Maturity Level 4 | ✅ Complete — GitOps-layer reconstruction with failure injection and recovery |
@@ -63,6 +64,9 @@ baselines are measured and documented in
 | AWS / Terraform/OpenTofu / local-to-cloud promotion | 📋 Deferred — no current demonstrated requirement |
 | Persistent observability stack | 📋 Deferred — no demonstrated diagnostic need and memory remains the binding constraint |
 | AI operations | 📋 Deferred — deterministic boundaries have not yet required LLM inference |
+| PI-1 recurring snapshots | ⏸️ Proposed, not activated — `docs/09-observability/pi1-scheduling-proposal.md`; awaiting operator authorization (no cron entry exists) |
+| PI-2 / PI-6 (forecast, reporting) | ⏸️ Dependent on the PI-1 observation period — requires recurring snapshots AND the evidence-quality criteria in the scheduling proposal |
+| PI-4 live drift-injection validation | ⏸️ Synthetic validation complete (21/21); live injection requires authorization |
 
 ### Recent progress (verified 2026-10-26/27 — see [docs/ROADMAP-STATUS.md](docs/ROADMAP-STATUS.md) for the evidence trail)
 
