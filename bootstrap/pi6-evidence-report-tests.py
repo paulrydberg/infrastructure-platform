@@ -40,6 +40,110 @@ def _window_of(rows):
     return d
 
 
+class TestAuthorityAdversarial(unittest.TestCase):
+    def test_11_contradictory_snapshot_cannot_upgrade(self):
+        """A snapshot claiming capacity_gate_pass=true while measuring below
+        the threshold cannot upgrade authority — PI-3 re-derives the verdict
+        from measured values, never trusting the snapshot's own claim, and
+        the report authority stays deterministic on that verdict."""
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp) / "s"; d.mkdir()
+            snap = _snap(NOW - 3600)
+            snap["gates"]["capacity_gate_pass"] = True  # contradiction
+            (d / "pi1-c.json").write_text(json.dumps(snap))
+            rpt, errs = pi6.build_report(d, now_s=NOW)
+            self.assertEqual(rpt["pi3_readiness"]["verdict"], "INSUFFICIENT_DATA")
+            self.assertNotEqual(rpt["authority"], "AUTHORITATIVE")
+
+    def test_12_caller_mutation_of_report_cannot_upgrade(self):
+        """build_report returns a fresh dict each call; mutating a prior
+        report's authority field cannot leak into a subsequent build."""
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp) / "s"; d.mkdir()
+            (d / "pi1-a.json").write_text(json.dumps(_snap(NOW - 3600)))
+            rpt, _ = pi6.build_report(d, now_s=NOW)
+            self.assertEqual(rpt["authority"], "ADVISORY_ONLY")
+            rpt["authority"] = "AUTHORITATIVE"          # caller tamper
+            rpt["evidence"]["window_qualified"] = True  # caller tamper
+            rpt2, _ = pi6.build_report(d, now_s=NOW)
+            self.assertEqual(rpt2["authority"], "ADVISORY_ONLY")
+            self.assertFalse(rpt2["evidence"]["window_qualified"])
+
+    def test_13_null_free_disk_is_insufficient_not_authoritative(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp) / "s"; d.mkdir()
+            snap = _snap(NOW - 3600)
+            snap["host"]["free_disk_gib"] = None
+            (d / "pi1-n.json").write_text(json.dumps(snap))
+            rpt, errs = pi6.build_report(d, now_s=NOW)
+            self.assertIsNotNone(rpt)
+            self.assertNotEqual(rpt["authority"], "AUTHORITATIVE")
+            self.assertTrue(errs)  # degradation is visible
+
+    def test_14_hash_identity_tracks_content(self):
+        """The reported SHA-256 identifies the EXACT bytes consumed: mutate
+        the snapshot after first build → hash must change on rebuild."""
+        import hashlib
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp) / "s"; d.mkdir()
+            p = d / "pi1-m.json"
+            p.write_text(json.dumps(_snap(NOW - 3600)))
+            r1, _ = pi6.build_report(d, now_s=NOW)
+            self.assertEqual(r1["evidence"]["snapshot_sha256"],
+                             hashlib.sha256(p.read_bytes()).hexdigest())
+            obj = json.loads(p.read_text())
+            obj["host"]["free_disk_gib"] = 41.0
+            p.write_text(json.dumps(obj))
+            r2, _ = pi6.build_report(d, now_s=NOW)
+            self.assertNotEqual(r1["evidence"]["snapshot_sha256"],
+                                r2["evidence"]["snapshot_sha256"])
+            self.assertEqual(r2["evidence"]["snapshot_sha256"],
+                             hashlib.sha256(p.read_bytes()).hexdigest())
+
+    def test_15_insufficient_pi3_disqualifies_authority(self):
+        """A qualified-or-not window whose latest snapshot lacks docker/k3s
+        → PI-3 INSUFFICIENT_DATA → the report must be ADVISORY_ONLY, never
+        AUTHORITATIVE (build_report evaluates the real 14-day window)."""
+        espec = importlib.util.spec_from_file_location(
+            "evw", HERE / "evidence_window_validator.py")
+        evw = importlib.util.module_from_spec(espec)
+        espec.loader.exec_module(evw)
+        d = Path(tempfile.mkdtemp()) / "sq"; d.mkdir()
+        for i in range(24):  # ends 1h before NOW: inside window, no anomaly
+            t = NOW - 90000 + 1800 + 3600 * i
+            (d / f"pi1-{i}.json").write_text(json.dumps(_snap(t)))
+        wv, wok = evw.validate_window(d, days=14, now_s=NOW)
+        self.assertFalse(wok, "24h fixture cannot qualify a 14-day window")
+        rpt, errs = pi6.build_report(d, now_s=NOW)
+        self.assertEqual(rpt["evidence"]["window_qualified"], False)
+        self.assertEqual(rpt["pi3_readiness"]["verdict"], "INSUFFICIENT_DATA")
+        self.assertEqual(rpt["authority"], "ADVISORY_ONLY")
+
+    def test_16_report_reproducible_excluding_runtime_stamp(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp) / "s"; d.mkdir()
+            (d / "pi1-a.json").write_text(json.dumps(_snap(NOW - 3600)))
+            r1, _ = pi6.build_report(d, now_s=NOW)
+            r2, _ = pi6.build_report(d, now_s=NOW)
+            a, b = dict(r1), dict(r2)
+            a.pop("generated_at_utc")
+            b.pop("generated_at_utc")
+            self.assertEqual(json.dumps(a, sort_keys=True),
+                             json.dumps(b, sort_keys=True))
+
+    def test_17_advisory_note_never_implies_permission(self):
+        """The advisory note must not contain remediation/execution language;
+        advisory is informational only."""
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp) / "s"; d.mkdir()
+            (d / "pi1-a.json").write_text(json.dumps(_snap(NOW - 3600)))
+            rpt, _ = pi6.build_report(d, now_s=NOW)
+            note = rpt["note"].lower()
+            for forbidden in ("execute", "remediat", "deploy", "fix ",
+                              "apply"):
+                self.assertNotIn(forbidden, note)
+
+
 class TestAuthority(unittest.TestCase):
     def test_01_insufficient_data_when_dir_missing(self):
         rpt, errs = pi6.build_report("/nonexistent-snaps", now_s=NOW)

@@ -131,6 +131,7 @@ def build_report(snapshot_dir, snapshot_file=None, now_s=None):
             "snapshot_age_s": age_s,
             "snapshot_stale": stale,
             "window_qualified": qualified,
+            "window_days": 14,
             "window_criteria": window.get("criteria_results"),
             "window_errors": window.get("errors"),
         },
