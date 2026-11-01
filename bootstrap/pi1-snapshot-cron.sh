@@ -18,6 +18,12 @@
 #   - retention: 90 days, enforced here (delete older than 90d on each run)
 #   - exit codes: 0 ok/skip; 1 collection failed (logged, non-fatal for cron)
 set -u
+# DEFECT PI1-CRON-1 fix (2026-11-01): cron's default PATH (/usr/bin:/bin) lacks
+# /usr/sbin (sysctl -> swapusage probe) and /usr/local/bin (docker/kubectl -> k3s
+# probes). Every cron snapshot since PI-1 activation recorded null k3s/docker/swap
+# fields while manual runs succeeded (reproduced + verified 2026-11-01). Minimal
+# deterministic fix: pin the probe PATH here. No collector/threshold/schedule change.
+export PATH="/usr/local/bin:/usr/sbin:/usr/bin:/bin"
 REPO="/Users/macmini/.hermes/projects/infrastructure-platform"
 OUT_DIR="$HOME/.infrastructure-platform/pi1-snapshots"
 LOCK="/tmp/pi1-snapshot.lock"
