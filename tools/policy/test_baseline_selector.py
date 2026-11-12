@@ -166,5 +166,58 @@ class TestBaselineSelection(Base):
         self.assertIn("print(BASELINE_PATH)", src)
 
 
+class ArgvPrecedence(unittest.TestCase):
+    """DEFECT CI-R2-3 (2026-11-12, PR #5): __main__ let the ambient
+    GITHUB_REF_NAME env var shadow the explicitly-passed argv ref. On
+    pull_request events GitHub sets GITHUB_REF_NAME to the synthetic
+    '<PR>/merge' ref — a branch with no runs — so candidate enumeration
+    was empty and R2 failed closed as UNKNOWN on every PR run. ci.yml
+    deliberately passes github.base_ref || github.ref_name as argv; argv
+    must take precedence. Reproduced experimentally on the exact PR #5
+    arguments: env set -> UNAVAILABLE, env unset -> baseline found."""
+
+    PR_SHA = "57068b29b8f8043c68282c8bc4fe5bf997986730"
+    PR_RUN = "43326716972"
+
+    def test_8_argv_overrides_pr_merge_env(self):
+        """The exact PR #5 failure signature must never recur: argv ref
+        'main' with ambient GITHUB_REF_NAME='<PR>/merge' must resolve to
+        'main' (argv wins), never to the empty synthetic ref."""
+        resolved = bs.resolve_identifiers(
+            ["main", self.PR_SHA, self.PR_RUN],
+            env={"GITHUB_REF_NAME": "5/merge",
+                 "GITHUB_SHA": self.PR_SHA,
+                 "GITHUB_RUN_ID": self.PR_RUN})
+        self.assertIsNotNone(resolved)
+        self.assertEqual(resolved[0], "main",
+                         "argv 'main' must win over synthetic '5/merge' ref")
+        self.assertEqual(resolved[1], self.PR_SHA)
+        self.assertEqual(resolved[2], self.PR_RUN)
+
+    def test_9_env_fallback_when_no_argv(self):
+        """No argv -> env fallback still works (push-run compatibility:
+        GITHUB_REF_NAME=main resolves without argv)."""
+        resolved = bs.resolve_identifiers(
+            [], env={"GITHUB_REF_NAME": "main",
+                     "GITHUB_SHA": "abc", "GITHUB_RUN_ID": "1"})
+        self.assertEqual(resolved, ("main", "abc", "1"))
+
+    def test_9b_partial_argv_env_fills_rest(self):
+        """Partial argv -> env fills only the missing identifiers."""
+        resolved = bs.resolve_identifiers(
+            ["main"], env={"GITHUB_SHA": "abc", "GITHUB_RUN_ID": "1"})
+        self.assertEqual(resolved, ("main", "abc", "1"))
+
+    def test_10_missing_identifiers_fail_closed(self):
+        """No argv and no env -> refuse to guess: None (the caller exits
+        2 with R2=UNKNOWN on stderr), never an empty-string guess."""
+        self.assertIsNone(bs.resolve_identifiers(
+            [], env={}))
+        self.assertIsNone(bs.resolve_identifiers(
+            ["main"], env={}))
+        self.assertIsNone(bs.resolve_identifiers(
+            [], env={"GITHUB_REF_NAME": "main"}))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
