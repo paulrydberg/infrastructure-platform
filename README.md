@@ -65,7 +65,7 @@ baselines are measured and documented in
 | Persistent observability stack | 📋 Deferred — no demonstrated diagnostic need and memory remains the binding constraint |
 | AI operations | 📋 Deferred — deterministic boundaries have not yet required LLM inference |
 | PI-1 recurring snapshots | ✅ **ACTIVE** — hourly at :17, installed 2026-10-31 after deterministic-only execution audit; first scheduled run verified 2026-10-31T03:17:01Z; observation window started (see `docs/09-observability/pi1-scheduling-proposal.md` for contract + rollback) |
-| PI-2 / PI-6 (forecast, reporting) | ⏸️ Blocked pending qualification — requires the 14-day minimum window AND machine-checked criteria (coverage ≥90%, schema-valid ≥95%, gaps ≤6 h, threshold stability) via `evidence_window_validator.py`; snapshots alone do not qualify them |
+| PI-2 / PI-6 (forecast, reporting) | PI-2 **implemented** — deterministic capacity forecast (`bootstrap/pi2_capacity_forecast.py`, 16/16 tests): segments history at capacity discontinuities (never extrapolates across them), re-verifies PI-1 window qualification on every run, reports INSUFFICIENT_DATA when post-discontinuity history is too short (current live state — the 2026-11-12 capacity release is 2 h old). PI-6: AUTHORITATIVE as of 2026-11-12 (window qualified 2026-11-12: 311 snapshots, C1–C4 pass). PI-2/PI-6 unlock criterion (machine-checked window) is **satisfied** |
 | PI-4 live drift-injection validation | ⏸️ Synthetic validation complete (29/29); live injection requires authorization |
 
 ### Recent progress (verified 2026-10-26/27 — see [docs/ROADMAP-STATUS.md](docs/ROADMAP-STATUS.md) for the evidence trail)
