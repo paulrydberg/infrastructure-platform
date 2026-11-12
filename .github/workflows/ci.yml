@@ -39,6 +39,7 @@ jobs:
           # A red suite blocks merge exactly like any other gate.
           set -e
           python3 bootstrap/evidence-window-validator-tests.py
+          python3 bootstrap/pi2-capacity-forecast-tests.py
           python3 bootstrap/pi4-drift-detector-tests.py
           python3 bootstrap/platform-state-collector-tests.py
           python3 bootstrap/deployment-readiness-tests.py
