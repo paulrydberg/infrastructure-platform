@@ -116,10 +116,36 @@ def select_baseline(ref, current_sha, current_run_id, dest="/tmp/baseline-eviden
     return None
 
 
+def resolve_identifiers(argv, env=None):
+    """Resolve (ref, sha, run_id) for __main__ use. argv (no program
+    name) takes precedence over the ambient environment; returns None
+    when any identifier is missing. Pure and testable: DEFECT CI-R2-3
+    (2026-11-12, PR #5) was exactly an env-shadowing-argv bug here."""
+    env = os.environ if env is None else env
+    ref = argv[0] if len(argv) > 0 else env.get("GITHUB_REF_NAME")
+    sha = argv[1] if len(argv) > 1 else env.get("GITHUB_SHA")
+    run_id = argv[2] if len(argv) > 2 else env.get("GITHUB_RUN_ID")
+    if not (ref and sha and run_id):
+        return None
+    return ref, sha, run_id
+
+
 if __name__ == "__main__":
-    ref = os.environ.get("GITHUB_REF_NAME") or sys.argv[1]
-    sha = os.environ.get("GITHUB_SHA") or sys.argv[2]
-    run_id = os.environ.get("GITHUB_RUN_ID") or sys.argv[3]
+    # DEFECT CI-R2-3 (2026-11-12, PR #5): GitHub Actions always exports
+    # GITHUB_REF_NAME, and on pull_request events it is the synthetic
+    # "<PR>/merge" ref — a branch with no runs, so candidate enumeration
+    # was empty and R2 failed closed as UNKNOWN on every PR run since
+    # the CI-R2-2 rewrite. ci.yml deliberately passes
+    # github.base_ref || github.ref_name as argv (the CI-R2-1 fallback);
+    # argv must therefore take precedence over the ambient env var.
+    # Push runs were unaffected (GITHUB_REF_NAME == main), which is why
+    # main stayed green and no PR exercised the path until PR #5.
+    ids = resolve_identifiers(sys.argv[1:])
+    if ids is None:
+        print("baseline selector: missing ref/sha/run_id -> no baseline "
+              "(R2=UNKNOWN)", file=sys.stderr)
+        sys.exit(2)
+    ref, sha, run_id = ids
     try:
         path = select_baseline(ref, sha, run_id, dest="/tmp/baseline-evidence")
     except RuntimeError as e:
