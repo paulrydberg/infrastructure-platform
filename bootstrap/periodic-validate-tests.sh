@@ -236,13 +236,15 @@ PYEOF
 check "T18: record carries its own runner/manifest versions" "$t18b" "pass"
 
 echo "== T19: version change alone is not drift; stable duration stays clean =="
-# Prior record: same-duration scale (1s class) so no duration regression, but
-# different versions. Expected: drift stays NO_UNEXPECTED_DRIFT while the
-# comparison still marks the versions CHANGED — proving version fields are
-# reported but never classified as drift by themselves.
+# Prior record uses duration 84 (real-run class, same as T18) so the run's
+# integer-second measurement cannot cross the 1.5x REGRESSION ratio boundary:
+# a 1s fixture sits on the duration-measurement floor, where normal wall-clock
+# straddling flips the measured run duration 1->2s and honestly classifies
+# DURATION_REGRESSION — a timing artifact that would mask the version-drift
+# invariant under test. Version fields still differ (9.9.9 -> 1.1.0).
 mkdir -p "$T/t19/ev"
 cat > "$T/t19/ev/validation-l6-t19prev.json" <<'EOF'
-{"run_id":"l6-t19prev","source_commit":"1111111111111111111111111111111111111111","runner_version":"9.9.9","manifest_version":"9.9.9","overall_result":"FAIL","duration_seconds":1,"resource_gate":"PASSED","runner_report":"/tmp/l6-t19-nonexistent-report.json"}
+{"run_id":"l6-t19prev","source_commit":"1111111111111111111111111111111111111111","runner_version":"9.9.9","manifest_version":"9.9.9","overall_result":"FAIL","duration_seconds":84,"resource_gate":"PASSED","runner_report":"/tmp/l6-t19-nonexistent-report.json"}
 EOF
 L6_VALIDATE_ONLY=1 L6_EVIDENCE_DIR="$T/t19/ev" bash "$HERE/periodic-validate.sh" > "$T/t19.out" 2>&1
 t19_rc=$?
