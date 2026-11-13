@@ -356,5 +356,98 @@ class Contract(Base):
         self.assertEqual(r["schema_version"], "1.0.0")
 
 
+class FluctuationReversal(Base):
+    """Real-evidence-driven reversal handling (2026-11-13): the live
+    241->275->241 single-hour spike fragmented the post-release segment,
+    discarding ~12 h of usable forecast history. A cluster of consecutive
+    high-rate jumps whose NET change reverts (|post - pre| <= 5 GiB) is a
+    temporary fluctuation: reported but NOT segmenting. Persistent net
+    shifts (234 GiB release) always segment."""
+
+    def test_17_reverted_spike_does_not_segment(self):
+        # Stable 240 GiB plateau, one-hour spike to 275, back to 241:
+        # net change across the cluster is +1 GiB -> fluctuation_reversed,
+        # history NOT segmented, plateau trend survives intact.
+        start = NOW - 14 * DAY
+        pairs = [(start + i * HOUR, 240.0) for i in range(14 * 24)]
+        spike = start + 7 * DAY + HOUR
+        # replace two consecutive slots to make the blip: 240->275->241
+        i_sp = int((spike - start) / HOUR)
+        pairs[i_sp] = (pairs[i_sp][0], 275.0)
+        pairs[i_sp + 1] = (pairs[i_sp + 1][0], 241.0)
+        d = _write_dir(self.tmp, pairs)
+        series, excl = pi2.load_series(d, now_s=NOW)
+        disc = pi2.detect_discontinuities(series)
+        self.assertTrue(disc, "the spike must still be DETECTED")
+        self.assertTrue(all(dd["fluctuation_reversed"] for dd in disc),
+                        "reverted spike must be classified as fluctuation")
+        seg, segs = pi2.segment(series, disc)
+        self.assertEqual(len(segs), 1, "no segmentation for reverted blip")
+        self.assertEqual(len(seg), 14 * 24, "full history remains usable")
+        r = pi2.forecast(series, excl, GATE, now_s=NOW)
+        self.assertEqual(r["verdict"], "STABLE")
+        self.assertGreater(r["segment_fit"]["last_free_gib"], 200.0)
+
+    def test_18_persistent_release_still_segments(self):
+        # Same series shape but the jump is the genuine 234 GiB release:
+        # net change is huge -> NOT reversed, segments exactly as before.
+        start = NOW - 12 * DAY - 31 * HOUR
+        pairs = [(start + i * HOUR, 30.0 - i * (16.0 / (12 * 24)))
+                 for i in range(12 * 24)]
+        step_at = pairs[-1][0] + HOUR
+        pairs.append((step_at, 248.0))
+        pairs += [(step_at + i * HOUR, 248.0) for i in range(1, 31)]
+        d = _write_dir(self.tmp, pairs)
+        series, excl = pi2.load_series(d, now_s=NOW)
+        disc = pi2.detect_discontinuities(series)
+        self.assertTrue(disc)
+        self.assertFalse(disc[0]["fluctuation_reversed"],
+                         "genuine release is never a fluctuation")
+        seg, segs = pi2.segment(series, disc)
+        self.assertEqual(len(seg), 31, "release still segments the history")
+        self.assertEqual(len(segs), 2)
+
+    def test_19_blip_inside_trend_does_not_discard_history(self):
+        # Declining trend with one reverted blip mid-way: the forecast
+        # must use the WHOLE segment (trend basis unbroken by the blip).
+        start = NOW - 14 * DAY
+        pairs = [(start + i * HOUR, 120.0 - 0.2 * i)
+                 for i in range(14 * 24)]
+        i_sp = 7 * 24
+        expected_mid = 120.0 - 0.2 * i_sp
+        pairs[i_sp] = (pairs[i_sp][0], expected_mid + 40.0)
+        pairs[i_sp + 1] = (pairs[i_sp + 1][0], expected_mid - 0.1)
+        d = _write_dir(self.tmp, pairs)
+        series, excl = pi2.load_series(d, now_s=NOW)
+        disc = pi2.detect_discontinuities(series)
+        self.assertTrue(all(dd["fluctuation_reversed"] for dd in disc))
+        seg, segs = pi2.segment(series, disc)
+        self.assertEqual(len(segs), 1)
+        r = pi2.forecast(series, excl, GATE, now_s=NOW)
+        self.assertEqual(r["verdict"], "FORECAST")
+        # slope still the underlying decline, not distorted into
+        # something steeper by treating the blip as two breaks
+        self.assertAlmostEqual(r["segment_fit"]["slope_gib_per_hour"],
+                               -0.2, delta=0.05)
+        self.assertGreater(r["time_to_gate"]["hours"], 0)
+
+    def test_20_sustained_shift_is_not_fluctuation(self):
+        # A jump whose level STAYS (no reversion) is persistent even with
+        # a modest 30 GiB delta — must segment like any regime change.
+        start = NOW - 14 * DAY
+        pairs = [(start + i * HOUR, 100.0) for i in range(10 * 24)]
+        jump_at = pairs[-1][0] + HOUR
+        pairs.append((jump_at, 70.0))
+        pairs += [(jump_at + i * HOUR, 70.0) for i in range(1, 4 * 24)]
+        d = _write_dir(self.tmp, pairs)
+        series, excl = pi2.load_series(d, now_s=NOW)
+        disc = pi2.detect_discontinuities(series)
+        self.assertTrue(disc)
+        self.assertFalse(disc[0]["fluctuation_reversed"])
+        seg, segs = pi2.segment(series, disc)
+        self.assertEqual(len(segs), 2)
+        self.assertEqual(len(seg), 4 * 24)  # post-jump segment only
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
