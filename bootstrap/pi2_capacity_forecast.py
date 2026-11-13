@@ -145,40 +145,86 @@ def load_series(dirpath, now_s=None):
                     "invalid_free_disk_gib": excluded_invalid}
 
 
+# Reversal tolerance: a cluster of consecutive high-rate jumps whose NET
+# level change (post_last - pre_first) is within this many GiB of zero is
+# classified as a temporary fluctuation (purgeable-space spike that
+# reversed), NOT a regime change. The cluster is recorded but does not
+# segment the history — no forecast basis is lost to a self-reverting
+# blip. Genuine structural changes (234 GiB release: net +234) always
+# exceed this and always segment.
+REVERSAL_NET_GIB = 5.0
+
+
+def _cluster(jump_indices):
+    """Group consecutive jump indices into clusters (adjacent indices are
+    one fluctuation event, e.g. 241->275->241 = one reverted spike)."""
+    if not jump_indices:
+        return []
+    out = [[jump_indices[0]]]
+    for i in jump_indices[1:]:
+        if i == out[-1][-1] + 1:
+            out[-1].append(i)
+        else:
+            out.append([i])
+    return out
+
+
 def detect_discontinuities(series):
     """Indices i where the rate-normalized change series[i] - series[i-1]
-    is a material step change. Rate = delta_GiB / gap_hours; a rate >=
-    JUMP_GIB_PER_HOUR marks a change of measured base, not ordinary
-    consumption. Gap is the elapsed time between observations; zero,
-    negative, or extreme gaps are clamped (rate = delta / max(gap_h, 1e-3)).
-    This prevents:
+    is a material step change. Rate = delta_GiB / gap_hours; a rate >
+    JUMP_GIB_PER_HOUR marks a candidate change of measured base.
+
+    Consecutive candidate jumps are clustered; a cluster whose NET level
+    change (series[last] - series[first-1]) is within REVERSAL_NET_GIB of
+    zero is a temporary fluctuation (purgeable spike that reversed) and is
+    REPORTED (fluctuation_reversed) but does NOT segment the history. Only
+    persistent net shifts produce segmentation boundaries. This preserves
+    usable forecast history that a self-reverting blip would otherwise
+    discard, while genuine structural breaks always segment.
+
+    Gap handling: zero/negative/extreme gaps are clamped
+    (rate = delta / max(gap_h, 1e-3)). This prevents:
       - plausible gradual consumption (e.g. 6 GiB/h over several hours)
         from being treated as a structural break;
       - purgeable-space oscillations (~25-50 GiB in ~1h -> 25-50 GiB/h)
         from being treated as continuous trend;
       - the genuine 234 GiB release (1h -> 234 GiB/h) from being missed.
     """
-    out = []
+    raw = []
     for i in range(1, len(series)):
         delta = series[i][1] - series[i - 1][1]
         gap_s = series[i][0] - series[i - 1][0]
         gap_h = max(gap_s / 3600.0, 1e-3)
         rate = abs(delta) / gap_h
         if rate > JUMP_GIB_PER_HOUR:
-            out.append({"index": i, "at_utc": time.strftime(
-                "%Y-%m-%dT%H:%M:%SZ", time.gmtime(series[i][0])),
-                "delta_gib": round(delta, 1),
-                "gap_h": round(gap_h, 2),
-                "rate_gib_per_hour": round(rate, 1)})
+            raw.append({"index": i, "delta_gib": round(delta, 1),
+                        "gap_h": round(gap_h, 2),
+                        "rate_gib_per_hour": round(rate, 1)})
+
+    out = []
+    for cluster in _cluster([j["index"] for j in raw]):
+        pre = series[cluster[0] - 1][1]
+        post = series[cluster[-1]][1]
+        net = post - pre
+        persistent = abs(net) > REVERSAL_NET_GIB
+        for idx in cluster:
+            j = next(x for x in raw if x["index"] == idx)
+            out.append({**j, "at_utc": time.strftime(
+                "%Y-%m-%dT%H:%M:%SZ", time.gmtime(series[idx][0])),
+                "fluctuation_reversed": not persistent})
     return out
 
 
 def segment(series, discontinuities):
-    """Split the series at discontinuities. Returns the LAST segment (the
-    only one a forecast may legitimately extrapolate) plus the full list."""
+    """Split the series at PERSISTENT discontinuities only. Clusters marked
+    fluctuation_reversed=True are temporary self-reverting blips and do
+    NOT segment — their observations remain usable forecast history.
+    Returns the LAST segment (the only one a forecast may legitimately
+    extrapolate) plus the full list."""
     if not series:
         return [], []
-    cuts = {0} | {d["index"] for d in discontinuities}
+    cuts = {0} | {d["index"] for d in discontinuities
+                  if not d.get("fluctuation_reversed", False)}
     bounds = sorted(cuts | {len(series)})
     segments = [series[bounds[i]:bounds[i + 1]]
                 for i in range(len(bounds) - 1)]
