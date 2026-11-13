@@ -63,11 +63,21 @@ LLM_INFERENCE_REQUIRED = 0
 
 # Explicit minimum-sample requirement (mandate): below this, no fit.
 MIN_SAMPLES = 8
-# Discontinuity detection: a log10(|delta|) jump is material when the
-# one-hour change exceeds JUMP_LOG10_GIB decades of GiB (10^1.3 ~ 20 GiB
-# in one hour — beyond any plausible real consumption/reclamation rate
-# and matching the observed purgeable/pinned release mechanism).
-JUMP_LOG10_GIB = 1.3
+# Discontinuity detection: a rate-normalized change in free space is
+# material when the GiB/hour rate exceeds JUMP_GIB_PER_HOUR. This
+# normalizes by the actual observation gap so that:
+#   - plausible gradual consumption (e.g. 6 GiB/h over several hours)
+#     is NOT a discontinuity;
+#   - purgeable-space oscillations (~25-50 GiB in ~1h -> 25-50 GiB/h)
+#     ARE discontinuities;
+#   - the genuine 234 GiB release (1h -> 234 GiB/h) IS a discontinuity;
+#   - future irregular gaps are handled correctly.
+# Threshold chosen to separate plausible consumption (<=15 GiB/h) from
+# purgeable releases (>25 GiB/h). The 2026-11-12 234 GiB/h release
+# remains decisively detected. A 15 GiB outlier over 1h (15 GiB/h)
+# is below this threshold and treated as an outlier, not a discontinuity.
+# Zero/negative/extreme gaps are handled safely (rate = delta / max(gap_h, 1e-3)).
+JUMP_GIB_PER_HOUR = 20.0
 # A segment shorter than this (in hours of span) is never fit after a
 # discontinuity — reported INSUFFICIENT_DATA instead.
 MIN_SEGMENT_HOURS = 24.0
@@ -90,6 +100,9 @@ def _parse_ts(ts):
 
 
 def _free_gib(snapshot):
+    """Extract free_disk_gib from snapshot. Returns float >= 0 or None if
+    missing, null, negative, or non-numeric. None signals an excluded
+    observation; the caller tracks exclusion counts and reasons."""
     host = snapshot.get("host") or {}
     v = host.get("free_disk_gib")
     if isinstance(v, (int, float)) and not isinstance(v, bool) and v >= 0:
@@ -97,36 +110,66 @@ def _free_gib(snapshot):
     return None
 
 
+def _free_gib_null(snapshot):
+    """Check if free_disk_gib is present but null/explicitly None (permitted
+    by schema). Returns True if the field exists and is None."""
+    host = snapshot.get("host") or {}
+    return "free_disk_gib" in host and host.get("free_disk_gib") is None
+
+
 def load_series(dirpath, now_s=None):
     """Chronological [(epoch_s, free_gib)] from schema-valid snapshots in
     the trailing validator window. Malformed/duplicate/future-dated
     observations are dropped (conservatively) — the validator's counts
-    remain the authoritative record of what was excluded."""
-    records, _malformed = evw._load_snapshots(Path(dirpath), WINDOW_DAYS,
+    remain the authoritative record of what was excluded. Returns
+    (series, excluded_counts) where excluded_counts is a dict with
+    'null_free_disk_gib' and 'invalid_free_disk_gib' counts."""
+    records, _malformed = evw._load_snapshots(str(dirpath), WINDOW_DAYS,
                                               now_s=now_s)
     series = []
+    excluded_null = 0
+    excluded_invalid = 0
     if records:
         for r in records:
             rec = r.get("record") or {}
+            if _free_gib_null(rec):
+                excluded_null += 1
+                continue
             f = _free_gib(rec)
             if f is not None:
                 series.append((r["ts"], f))
+            else:
+                excluded_invalid += 1
     series.sort(key=lambda p: p[0])
-    return series
+    return series, {"null_free_disk_gib": excluded_null,
+                    "invalid_free_disk_gib": excluded_invalid}
 
 
 def detect_discontinuities(series):
-    """Indices i where series[i] - series[i-1] is a material step change.
-    A one-hour jump in free space of >= 10^JUMP_LOG10_GIB GiB (up or down)
-    cannot be ordinary consumption and marks a change of measured base."""
-    threshold = 10.0 ** JUMP_LOG10_GIB
+    """Indices i where the rate-normalized change series[i] - series[i-1]
+    is a material step change. Rate = delta_GiB / gap_hours; a rate >=
+    JUMP_GIB_PER_HOUR marks a change of measured base, not ordinary
+    consumption. Gap is the elapsed time between observations; zero,
+    negative, or extreme gaps are clamped (rate = delta / max(gap_h, 1e-3)).
+    This prevents:
+      - plausible gradual consumption (e.g. 6 GiB/h over several hours)
+        from being treated as a structural break;
+      - purgeable-space oscillations (~25-50 GiB in ~1h -> 25-50 GiB/h)
+        from being treated as continuous trend;
+      - the genuine 234 GiB release (1h -> 234 GiB/h) from being missed.
+    """
     out = []
     for i in range(1, len(series)):
         delta = series[i][1] - series[i - 1][1]
-        if abs(delta) >= threshold:
+        gap_s = series[i][0] - series[i - 1][0]
+        gap_h = max(gap_s / 3600.0, 1e-3)
+        rate = abs(delta) / gap_h
+        if rate > JUMP_GIB_PER_HOUR:
             out.append({"index": i, "at_utc": time.strftime(
                 "%Y-%m-%dT%H:%M:%SZ", time.gmtime(series[i][0])),
-                "delta_gib": round(delta, 1)})
+                "delta_gib": round(delta, 1),
+                "gap_h": round(gap_h, 2),
+                "rate_gib_per_hour": round(rate, 1)})
     return out
 
 
@@ -167,7 +210,7 @@ def _fit(points):
             "n": n, "t0": t0, "span_hours": xs[-1] - xs[0]}
 
 
-def forecast(series, gate_gib, now_s=None):
+def forecast(series, excluded_counts, gate_gib, now_s=None):
     """Produce the PI-2 verdict dict. Deterministic given inputs."""
     now = now_s if now_s is not None else calendar.timegm(time.gmtime())
     last_seg, all_segs = segment(series, detect_discontinuities(series))
@@ -179,6 +222,7 @@ def forecast(series, gate_gib, now_s=None):
         "evaluated_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ",
                                           time.gmtime(now)),
         "input": {"observations_total": n_total,
+                  "excluded_observations": excluded_counts,
                   "discontinuities": detect_discontinuities(series),
                   "segments": len(all_segs),
                   "last_segment_observations": len(last_seg)},
@@ -206,7 +250,9 @@ def forecast(series, gate_gib, now_s=None):
     t_last, f_last = last_seg[-1]
     hours_to_gate = None
     if not stable and fit["slope_gib_per_hour"] < 0:
-        hours_to_gate = (f_last - gate_gib) / -fit["slope_gib_per_hour"]
+        # Project from evaluation time (now), not from last observation,
+        # so the reported remaining time is not stale.
+        hours_to_gate = (f_last + fit["slope_gib_per_hour"] * (now - t_last) / 3600.0 - gate_gib) / -fit["slope_gib_per_hour"]
     consumption = {
         # Distinguish free capacity (forecast basis) from consumption
         # (interpretive): net change over the last segment per hour.
@@ -241,10 +287,80 @@ def forecast(series, gate_gib, now_s=None):
             })}
 
 
+def backtest(series, gate_gib, now_s=None):
+    """Chronological rolling-origin backtest on the last history segment.
+    Each forecast origin uses only observations available at that origin.
+    Returns a list of evaluation dicts with forecast error metrics.
+    Respects discontinuity segmentation (origins only in the last segment).
+    Returns empty dict if insufficient history for any evaluation.
+    """
+    last_seg, _ = segment(series, detect_discontinuities(series))
+    if len(last_seg) < MIN_SAMPLES + 2:  # need train + at least 1 test
+        return {}
+
+    evaluations = []
+    # Start from MIN_SAMPLES, increment by 1 observation each origin
+    for i in range(MIN_SAMPLES, len(last_seg) - 1):
+        train = last_seg[:i + 1]
+        test = last_seg[i + 1]
+        if len(train) < MIN_SAMPLES:
+            continue
+
+        fit = _fit(train)
+        if fit["slope_gib_per_hour"] >= 0:
+            # No declining trend to evaluate
+            continue
+
+        # Forecast from origin (train end) to test point
+        origin_t = train[-1][0]
+        origin_f = train[-1][1]
+        gap_s = test[0] - origin_t
+        if gap_s <= 0:
+            continue
+        gap_h = gap_s / 3600.0
+
+        predicted = origin_f + fit["slope_gib_per_hour"] * (gap_s / 3600.0)
+        actual = test[1]
+        error_gib = predicted - actual
+        error_pct = (error_gib / actual * 100) if actual > 0 else float("inf")
+
+        evaluations.append({
+            "origin_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                         time.gmtime(train[-1][0])),
+            "train_observations": len(train),
+            "gap_hours": round(gap_s / 3600.0, 2),
+            "predicted_gib": round(predicted, 2),
+            "actual_gib": round(test[1], 2),
+            "error_gib": round(error_gib, 3),
+            "error_pct": round(error_pct, 2),
+        })
+
+    if not evaluations:
+        return {}
+
+    # Aggregate metrics
+    mae_gib = sum(abs(e["error_gib"]) for e in evaluations) / len(evaluations)
+    mse_gib = sum(e["error_gib"] ** 2 for e in evaluations) / len(evaluations)
+    rmse_gib = math.sqrt(mse_gib)
+    mape = sum(abs(e["error_pct"]) for e in evaluations) / len(evaluations)
+
+    return {
+        "evaluations": evaluations,
+        "summary": {
+            "evaluation_count": len(evaluations),
+            "mae_gib": round(mae_gib, 3),
+            "rmse_gib": round(rmse_gib, 3),
+            "mape_pct": round(mape, 2),
+            "first_origin_utc": evaluations[0]["origin_utc"] if evaluations else None,
+            "last_origin_utc": evaluations[-1]["origin_utc"] if evaluations else None,
+        }
+    }
+
+
 def validate_window_pre(dirpath, now_s=None):
     """Re-verify PI-1 C1-C4 qualification before forecasting (mandate).
     Import-uses the validator: one authority, no drift."""
-    return evw.validate_window(Path(dirpath), WINDOW_DAYS, now_s=now_s)
+    return evw.validate_window(str(dirpath), WINDOW_DAYS, now_s=now_s)
 
 
 def main(argv=None):
@@ -257,13 +373,13 @@ def main(argv=None):
 
     window, qualified = validate_window_pre(args.snapshot_dir)
     now_s = None
-    series = load_series(args.snapshot_dir, now_s=now_s)
+    series, excluded_counts = load_series(args.snapshot_dir, now_s=now_s)
     gate = args.gate_gib
     if window.get("criteria", {}).get("c4_threshold_stability", {}) \
             .get("distinct_values"):
         vals = window["criteria"]["c4_threshold_stability"]["distinct_values"]
         gate = float(vals[0])
-    result = forecast(series, gate, now_s=now_s)
+    result = forecast(series, excluded_counts, gate, now_s=now_s)
     result["window_qualification"] = {
         "qualified": window.get("window_qualified", qualified),
         "validator_version": window.get("validator_version"),
