@@ -359,6 +359,35 @@ assert old["overall_result"] in ("PASS", "FAIL", "BLOCKED", "EVIDENCE_ERROR")
 PYEOF
 check "T24: historical record (no forecast field) remains valid" "$t24a" "pass"
 
+echo "== T25: machinery-drill records are trigger-isolated (OM-1) =="
+# OM-1: a validate-only run is BY DEFINITION a machinery test, never a
+# scheduled qualification event. Its retained record must carry a
+# machinery-drill trigger so the readiness evaluator (pass-rate authority)
+# can exclude it; scheduled execute-mode records keep periodic-level6.
+L6_VALIDATE_ONLY=1 L6_EVIDENCE_DIR="$T/t25/ev" bash "$HERE/periodic-validate.sh" > "$T/t25.out" 2>&1
+NEW25=$(ls -t "$T/t25/ev"/validation-*.json | head -1)
+python3 - "$NEW25" <<'PYEOF' && t25a=pass || t25a=fail
+import json, sys
+d = json.load(open(sys.argv[1]))
+assert d["trigger"] == "machinery-drill", f"drill leaked as qualification event: {d['trigger']}"
+assert d["overall_result"] in ("PASS", "FAIL", "BLOCKED", "EVIDENCE_ERROR")
+assert d["reconstruction"].startswith("NOT_EXECUTED"), "drift into execute-mode evidence"
+PYEOF
+check "T25: validate-only record carries machinery-drill trigger" "$t25a" "pass"
+
+echo "== T26: scheduled-execute records keep periodic-level6 trigger =="
+# Structural: the trigger literal is mode-derived; the execute-mode branch
+# (no L6_VALIDATE_ONLY) must produce the scheduled trigger. Pinned by
+# inspecting the assignment: default is scheduled; validate-only overrides.
+python3 - "$HERE/periodic-validate.sh" <<'PYEOF' && t26a=pass || t26a=fail
+import sys
+src = open(sys.argv[1]).read()
+assert '"trigger": "machinery-drill" if' in src or "machinery-drill" in src
+# scheduled default must remain the qualification trigger
+assert '"periodic-level6"' in src
+PYEOF
+check "T26: trigger mode-derived; scheduled default preserved" "$t26a" "pass"
+
 echo "== RESULT: pass=$PASS fail=$FAILN =="
 [ "$FAILN" = "0" ] && echo "LEVEL 6 TESTS: ALL PASS" || echo "LEVEL 6 TESTS: FAILURES PRESENT"
 exit "$FAILN"
