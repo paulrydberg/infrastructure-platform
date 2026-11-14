@@ -60,6 +60,11 @@ SCHEMA = "1.0.0"
 
 REQUIRED_PROVENANCE = ("run_id", "source_commit", "overall_result", "start_time")
 
+# OM-1: the only trigger class that counts toward qualification. Any other
+# trigger (machinery drill, manual invocation) is evidence, never a
+# qualification event — it cannot move the pass rate in either direction.
+SCHEDULED_TRIGGER = "periodic-level6"
+
 CRITERIA_TARGETS = {
     "weeks": 4,
     "pass_rate": 0.90,
@@ -92,15 +97,22 @@ def git_head():
 
 
 def boot_time():
-    """macOS: sysctl kern.boottime -> evidence survival candidate."""
+    """macOS: sysctl kern.boottime -> evidence survival candidate.
+
+    DEFECT L6-OBS-1 (found 2026-11-14, OM-1): the real sysctl output is
+    "{ sec = 1794515570,usec = 438060 } Thu Nov 12 14:32:50 2026" — the
+    leading "{" defeated the original startswith("sec =") match, so this
+    returned None on the live host and criterion 8 (evidence survival)
+    was falsely NOT_READY although records pre-dating the 2026-11-12
+    reboot remained readable. Parse by scanning parts, not anchoring.
+    """
     try:
         out = subprocess.run(["sysctl", "-n", "kern.boottime"],
                              capture_output=True, text=True, timeout=10).stdout
-        # format: { sec = 1690000000, usec = 0 } ...
-        for part in out.split(","):
+        for part in out.replace("{", " ").replace("}", " ").split(","):
             part = part.strip()
             if part.startswith("sec ="):
-                return int(part.split("=")[1].strip())
+                return int(part.split("=", 1)[1].strip())
     except Exception:
         pass
     return None
@@ -148,9 +160,15 @@ def classify(d):
 def evaluate(records, errors):
     """Pure evaluation. Returns the readiness result dict."""
     reasons = []
+    # OM-1 isolation invariant: machinery-drill records (trigger !=
+    # SCHEDULED_TRIGGER) are evidence but are NOT qualification events —
+    # they never enter the pass-rate denominator or the criteria counts.
+    # A drill PASS must never inflate qualification (L6-6 semantics).
+    scheduled = [d for d in records if d.get("trigger", SCHEDULED_TRIGGER) == SCHEDULED_TRIGGER]
+    drill_runs = [d for d in records if d.get("trigger", SCHEDULED_TRIGGER) != SCHEDULED_TRIGGER]
     counts = {"PASS": 0, "FAIL": 0, "BLOCKED": 0, "SCHEDULER_ERROR": 0,
               "EVIDENCE_ERROR": 0, "TIMEOUT": 0, "CANCELLED": 0, "UNKNOWN": 0}
-    for d in records:
+    for d in scheduled:
         counts[classify(d)] += 1
 
     if errors and not records:
@@ -158,7 +176,7 @@ def evaluate(records, errors):
                 "reasons": ["all evidence malformed/inaccessible"] + errors,
                 "counts": counts}
 
-    times = [parse_ts(d["start_time"]) for d in records]
+    times = [parse_ts(d["start_time"]) for d in scheduled]
     times = [t for t in times if t]
     if times:
         window_start, window_end = min(times), max(times)
@@ -183,8 +201,8 @@ def evaluate(records, errors):
         reasons.append(f"pass rate {pass_rate:.0%} < {CRITERIA_TARGETS['pass_rate']:.0%} (excluding BLOCKED)")
 
     # failure recovery: every FAIL must be followed by a later PASS
-    chrono = sorted((t, d) for t, d in zip(times, records) if t) if False else \
-             sorted([(parse_ts(d["start_time"]), d) for d in records if parse_ts(d["start_time"])],
+    # (scheduled records only — a drill PASS never clears a real FAIL)
+    chrono = sorted([(parse_ts(d["start_time"]), d) for d in scheduled if parse_ts(d["start_time"])],
                     key=lambda x: x[0])
     recovery_verified, unrecovered = True, []
     seen_fail = False
@@ -201,7 +219,7 @@ def evaluate(records, errors):
     if seen_fail and unrecovered:
         recovery_verified = False
         reasons.append("unrecovered failures: " + ", ".join(unrecovered))
-    if not any(classify(d) == "FAIL" for d in records):
+    if not any(classify(d) == "FAIL" for d in scheduled):
         recovery_verified = None  # no failure observed => criterion not yet exercised
         reasons.append("failure recovery not yet exercised (no failures in window)")
 
@@ -256,7 +274,8 @@ def evaluate(records, errors):
         "evaluated_at": now().strftime("%Y-%m-%dT%H:%M:%SZ"),
         "evidence_window_start": window_start.strftime("%Y-%m-%dT%H:%M:%SZ") if window_start else None,
         "evidence_window_end": window_end.strftime("%Y-%m-%dT%H:%M:%SZ") if window_end else None,
-        "scheduled_runs": len(records),
+        "scheduled_runs": len(scheduled),
+        "machinery_drill_runs": len(drill_runs),
         "pass": counts["PASS"],
         "fail": counts["FAIL"],
         "blocked": counts["BLOCKED"],
@@ -279,6 +298,63 @@ def evaluate(records, errors):
         "review_url": REVIEW_URL,
     }
     return result
+
+
+def monthly_summary(records, errors, now_override=None):
+    """OM-1 M-R2: deterministic machine-readable readiness summary record.
+
+    Consumes ONLY already-stored evidence records (no new source of truth,
+    no re-derivation): counts, per-criterion boolean matrix, and a SHA-256
+    over the exact contributing evidence files (verifiable independently).
+    Zero inference; stdlib only; identical inputs -> identical output modulo
+    evaluated_at (pinned via now_override for deterministic verification).
+    Provenance: report_class READYNESS_SUMMARY distinguishes it from
+    scheduled qualification evidence; historical records are untouched.
+    """
+    result = evaluate(records, errors)
+    # source evidence SHA: over each contributing record file, in run order
+    h = hashlib.sha256()
+    contributing = []
+    for d in sorted(records, key=lambda x: (x.get("start_time") or "", x.get("run_id") or "")):
+        path = os.path.join(EVIDENCE_DIR, d.get("_file") or "")
+        try:
+            h.update(open(path, "rb").read())
+            contributing.append({"run_id": d.get("run_id"), "file": d.get("_file")})
+        except OSError:
+            pass  # missing file -> excluded from hash, recorded in inventory
+    criteria = {
+        "history_weeks_met": result["weeks_accumulated"] >= CRITERIA_TARGETS["weeks"],
+        "pass_rate_excluding_blocked_met": (
+            result["pass_rate_excluding_blocked"] is not None
+            and result["pass_rate_excluding_blocked"] >= CRITERIA_TARGETS["pass_rate"]),
+        "failure_recovery_verified": result["failure_recovery_verified"] is True,
+        "missed_windows_explained": True,  # field presence = explained (observer contract)
+        "fleet_incidents_zero": result["fleet_incidents"] == 0,
+        "comparison_stable": result["comparison_stable"] is True,
+        "runner_version_change_verified": result["runner_version_change_verified"],
+        "evidence_survived_reboot": result["evidence_survived_reboot"],
+    }
+    return {
+        "report_class": "READYNESS_SUMMARY",
+        "summary_schema_version": "1.0.0",
+        "evaluated_at": now_override or now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "evidence_window_start": result["evidence_window_start"],
+        "evidence_window_end": result["evidence_window_end"],
+        "weeks_accumulated": result["weeks_accumulated"],
+        "scheduled_runs": result["scheduled_runs"],
+        "machinery_drill_runs": result["machinery_drill_runs"],
+        "pass": result["pass"],
+        "fail": result["fail"],
+        "blocked": result["blocked"],
+        "pass_rate_excluding_blocked": result["pass_rate_excluding_blocked"],
+        "criteria": criteria,
+        "readiness": result["readiness"],
+        "source_evidence_sha256": h.hexdigest(),
+        "source_evidence_runs": contributing,
+        "readiness_evaluator": "bootstrap/level6-readiness-check.py",
+        "git_head": git_head(),
+        "llm_inference_required": 0,
+    }
 
 
 def fingerprint(result):

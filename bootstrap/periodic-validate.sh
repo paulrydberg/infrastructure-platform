@@ -285,6 +285,14 @@ START_ISO=$(date -u -r "$RUNNER_START" +%FT%TZ)
 END_ISO=$(date -u -r "$RUNNER_END" +%FT%TZ)
 RECORD="$EVIDENCE_DIR/validation-$RUN_ID.json"
 RETENTION="OK"
+# OM-1: mode-derived trigger — scheduled execute-mode runs are the
+# qualification event (periodic-level6); validate-only runs are machinery
+# drills and are excluded by the readiness evaluator's pass-rate authority.
+if [ "${L6_VALIDATE_ONLY:-0}" = "1" ]; then
+  TRIGGER_LABEL="machinery-drill"
+else
+  TRIGGER_LABEL="periodic-level6"
+fi
 RUN_ID="$RUN_ID" SCHED_MISSED="$SCHED_MISSED" RECORD="$RECORD" \
 RUNNER_COMMIT="$RUNNER_COMMIT" RUNNER_RC="$RUNNER_RC" \
 START_ISO="$START_ISO" END_ISO="$END_ISO" DURATION="$DURATION" \
@@ -293,11 +301,17 @@ GITOPS="$GITOPS" WLOAD="$WLOAD" K8S="$K8S" \
 COMPARISON="$COMPARISON" DRIFT_RESULT="$DRIFT_RESULT" \
 DISPOSABLE_LEFT="$DISPOSABLE_LEFT" FLEET_OK="$FLEET_OK" STAGE_COUNT="$STAGE_COUNT" \
 OVERALL="$OVERALL" OVERALL_NOTE="$OVERALL_NOTE" LATEST_REPORT="$LATEST_REPORT" \
+TRIGGER_LABEL="$TRIGGER_LABEL" \
 python3 - <<'PYEOF'
 import json, os, sys
 rec = {
   "run_id": os.environ["RUN_ID"],
-  "trigger": "periodic-level6",
+  # OM-1: trigger is mode-derived (env TRIGGER_LABEL — heredoc is quoted,
+  # so shell expansion does not apply here). A validate-only run is a
+  # machinery drill by definition — its retained record must never carry
+  # the scheduled qualification trigger, or it could contaminate the
+  # pass-rate authority.
+  "trigger": os.environ["TRIGGER_LABEL"],
   "scheduler": "launchd (com.infrastructure-platform.reproducible-validation)",
   "scheduler_missed_window": os.environ.get("SCHED_MISSED") or None,
   "repository": "paulrydberg/infrastructure-platform",

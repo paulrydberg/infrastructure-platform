@@ -225,6 +225,92 @@ class ReadinessTests(unittest.TestCase):
         for cmd in ("docker ", "kubectl", "helm ", "argocd", "k3s"):
             self.assertNotIn(cmd, src)
 
+    # --- OM-1 (2026-11-14): drill isolation + monthly readiness summary ----
+
+    # 16 — REGRESSION: boot_time() must parse the REAL macOS sysctl format
+    # "{ sec = 1794515570,usec = 438060 } Thu Nov 12 ..." (no space after the
+    # comma). The original implementation matched only 'sec =' at string
+    # start, silently returned None, and criterion 8 (evidence survival)
+    # was falsely NOT_READY even though records demonstrably survived the
+    # 2026-11-12 reboot.
+    def test_16_boot_time_parses_real_sysctl_format(self):
+        real = "{ sec = 1794515570,usec = 438060 } Thu Nov 12 14:32:50 2026"
+        with mock.patch.object(l6.subprocess, "run",
+                               return_value=mock.Mock(stdout=real)):
+            bt = l6.boot_time()
+        self.assertEqual(bt, 1794515570)
+
+    def test_16b_boot_time_tolerant_of_spaced_format(self):
+        spaced = "{ sec = 1700000000, usec = 0 } Wed Nov  1 00:00:00 2023"
+        with mock.patch.object(l6.subprocess, "run",
+                               return_value=mock.Mock(stdout=spaced)):
+            self.assertEqual(l6.boot_time(), 1700000000)
+
+    def test_16c_boot_time_unparseable_returns_none(self):
+        with mock.patch.object(l6.subprocess, "run",
+                               return_value=mock.Mock(stdout="garbage")):
+            self.assertIsNone(l6.boot_time())
+
+    # 17 — machinery-test records must NEVER count toward the pass rate.
+    # The readiness evaluator is the pass-rate authority; a drill record
+    # (validate-only, overall PASS) leaking into the evidence dir would
+    # inflate qualification. Records whose trigger is not the scheduled
+    # trigger are excluded from the denominator entirely and reported.
+    def test_17_machinery_drill_record_excluded_from_pass_rate(self):
+        recs = [
+            mk_record("sched1", self.T(4.5), "PASS"),
+            mk_record("sched2", self.T(4.0), "FAIL"),
+            mk_record("sched3", self.T(3.5), "PASS"),
+            mk_record("sched4", self.T(3.0), "PASS"),
+        ]
+        drill = mk_record("drill1", self.T(2.5), "PASS",
+                          trigger="machinery-drill",
+                          overall_note="validate-only machinery drill")
+        self.ev(recs + [drill])
+        r = l6.evaluate(l6.load_evidence()[0], [])
+        # denominator = scheduled records only: 3/4 = 75%, drill ignored
+        self.assertEqual(r["scheduled_runs"], 4)
+        self.assertEqual(r["pass"], 3)
+        self.assertEqual(r["fail"], 1)
+        self.assertEqual(r["machinery_drill_runs"], 1)
+        self.assertAlmostEqual(r["pass_rate_excluding_blocked"], 0.75)
+
+    def test_17b_no_drill_records_reports_zero(self):
+        self.ev([mk_record("s1", self.T(1.0), "PASS"),
+                 mk_record("s2", self.T(0.5), "PASS")])
+        r = l6.evaluate(l6.load_evidence()[0], [])
+        self.assertEqual(r["machinery_drill_runs"], 0)
+
+    # 18 — machine-readable monthly readiness summary (M-R2): the
+    # evaluator can write a deterministic summary record (SHA-256
+    # provenance, run inventory, criteria matrix) to the telemetry dir;
+    # identical inputs -> byte-identical record modulo evaluated_at.
+    def test_18_monthly_summary_deterministic_and_provenanced(self):
+        import hashlib
+        recs = [mk_record("s1", self.T(1.0), "PASS"),
+                mk_record("s2", self.T(0.5), "FAIL"),
+                mk_record("s3", self.T(0.2), "PASS")]
+        self.ev(recs)
+        records = l6.load_evidence()[0]
+        r1 = l6.monthly_summary(records, [], now_override="2026-11-14T18:00:00Z")
+        r2 = l6.monthly_summary(records, [], now_override="2026-11-14T18:00:00Z")
+        self.assertEqual(json.dumps(r1, sort_keys=True),
+                         json.dumps(r2, sort_keys=True))  # deterministic
+        self.assertEqual(r1["report_class"], "READYNESS_SUMMARY")  # provenance
+        self.assertIn("source_evidence_sha256", r1)
+        # SHA over the exact contributing files, verifiable independently
+        expected = hashlib.sha256(
+            b"".join(open(os.path.join(l6.EVIDENCE_DIR, d["_file"]), "rb").read()
+                     for d in records)).hexdigest()
+        self.assertEqual(r1["source_evidence_sha256"], expected)
+        self.assertEqual(r1["scheduled_runs"], 3)
+        self.assertEqual(r1["pass"], 2)
+        self.assertEqual(r1["machinery_drill_runs"], 0)
+        # criteria matrix present, per-criterion booleans, no prose-only
+        self.assertIn("criteria", r1)
+        self.assertIn("pass_rate_excluding_blocked_met", r1["criteria"])
+        self.assertNotIn("reasons", r1)  # machine-readable matrix, not prose
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
