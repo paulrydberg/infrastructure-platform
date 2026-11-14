@@ -312,6 +312,23 @@ def monthly_summary(records, errors, now_override=None):
     scheduled qualification evidence; historical records are untouched.
     """
     result = evaluate(records, errors)
+    # OM-2: all-evidence-malformed is a legitimate monthly condition — the
+    # summary must still be produced honestly (zero counts, readiness ERROR),
+    # never fabricated and never a crash.
+    if result["readiness"] == "ERROR" and "counts" not in result:
+        result["counts"] = {}
+    if result["readiness"] == "ERROR" and "scheduled_runs" not in result:
+        result.update({"scheduled_runs": 0, "machinery_drill_runs": 0,
+                       "pass": 0, "fail": 0, "blocked": 0,
+                       "pass_rate_excluding_blocked": None,
+                       "weeks_accumulated": 0.0,
+                       "evidence_window_start": None,
+                       "evidence_window_end": None,
+                       "failure_recovery_verified": None,
+                       "fleet_incidents": 0,
+                       "comparison_stable": False,
+                       "runner_version_change_verified": False,
+                       "evidence_survived_reboot": False})
     # source evidence SHA: over each contributing record file, in run order
     h = hashlib.sha256()
     contributing = []
@@ -425,12 +442,69 @@ def write_telemetry(result, records):
     return TELEMETRY_DIR
 
 
+def month_key(now_override=None):
+    """OM-2: current calendar month key (UTC), e.g. '2026-11'.
+
+    Injectable clock for deterministic tests; first-of-month semantics are
+    evaluated in UTC so the record name is stable regardless of host TZ.
+    """
+    n = now() if now_override is None else datetime.strptime(now_override, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    return n.strftime("%Y-%m")
+
+
+def month_summary_path(now_override=None):
+    """OM-2: path of this month's summary record (never overwritten in-month)."""
+    return os.path.join(TELEMETRY_DIR, f"readiness-summary-{month_key(now_override)}.json")
+
+
+def monthly_summary_due(now_override=None):
+    """OM-2: first-successful-run-of-month idempotency gate.
+
+    Returns (should_write, existing_path). A month's summary is written on
+    the first cron invocation that sees evidence for that month and only if
+    the month's record does not already exist (idempotent; no duplicates).
+    A missed execution (host down for the whole first run, etc.) self-heals:
+    any later run in the same month writes the then-current summary — the
+    record always reflects the best evidence available at write time, with
+    its own evaluated_at + git_head proving when it was produced.
+    """
+    path = month_summary_path(now_override)
+    if os.path.exists(path):
+        return False, path
+    return True, path
+
+
+def write_monthly_summary(records, errors, now_override=None):
+    """OM-2: generate + persist this month's READYNESS_SUMMARY if due.
+
+    Idempotent (existing month record is left untouched — never overwritten,
+    never duplicated); advisory reporting only (never a qualification gate,
+    never read by any qualification calculation); zero inference. Returns
+    the path written, or None when the month already has its record.
+    """
+    due, path = monthly_summary_due(now_override)
+    if not due:
+        return None
+    summary = monthly_summary(records, errors, now_override=now_override)
+    # OM-2: explicit execution provenance — clock and source revision of the
+    # generator run (distinct from the evidence provenance inside the summary).
+    summary["generated_by_git_head"] = git_head()
+    summary["generation_trigger"] = "readiness-cron-first-of-month"
+    os.makedirs(TELEMETRY_DIR, exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w") as fh:
+        json.dump(summary, fh, indent=2)
+    os.replace(tmp, path)  # atomic; partial writes never visible as records
+    return path
+
+
 def main(argv):
     notify_mode = "--notify" in argv
     records, errors = load_evidence()
     result = evaluate(records, errors)
     fp = fingerprint(result)
     notified = False
+    monthly_written = None
 
     if notify_mode:
         state = load_state()
@@ -450,6 +524,13 @@ def main(argv):
 
     if notify_mode:
         write_telemetry(result, records)
+        # OM-2: first-successful-run-of-month READYNESS_SUMMARY (idempotent,
+        # advisory, atomic write). Never gates; a failure here must not
+        # affect the observer's own exit code or evidence handling.
+        try:
+            monthly_written = write_monthly_summary(records, errors)
+        except Exception:
+            monthly_written = None
 
     print(json.dumps(result, indent=2))
     return 0 if result["readiness"] != "ERROR" else 1
