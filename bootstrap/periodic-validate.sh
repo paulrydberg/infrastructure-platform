@@ -358,6 +358,60 @@ except Exception:
     pass
 PYEOF
 
+# ---- capacity_forecast (M-R1, advisory) ------------------------------------
+# Read-only invocation of the merged PI-2 model over the PI-1 snapshot store.
+# CF advisory: this block NEVER gates — it is appended strictly AFTER outcome
+# classification (OVERALL/RGATE/EXIT_CODE are final above) and no gate logic
+# reads it. Insufficient/missing PI-1 evidence is recorded honestly
+# (status "unavailable" with a reason); values are never fabricated and the
+# classification above is untouched. Zero LLM inference (PI-2 is stdlib-only,
+# deterministic; ADR-0012 constraints preserved).
+SNAP_DIR="${L6_SNAPSHOT_DIR:-$HOME/.infrastructure-platform/pi1-snapshots}"
+RECORD="$RECORD" SNAP_DIR="$SNAP_DIR" PI2="$REPO_ROOT/bootstrap/pi2_capacity_forecast.py" \
+python3 - <<'PYEOF'
+import json, os, subprocess, sys
+p = os.environ["RECORD"]
+try:
+    d = json.load(open(p))
+except Exception:
+    sys.exit(0)
+cf = {"advisory": True, "llm_inference_required": 0,
+      "source_model": "bootstrap/pi2_capacity_forecast.py",
+      "snapshot_dir": os.environ["SNAP_DIR"]}
+try:
+    out = subprocess.run(
+        [sys.executable, os.environ["PI2"], os.environ["SNAP_DIR"]],
+        capture_output=True, text=True, timeout=120)
+    if out.returncode == 0 and out.stdout.strip():
+        r = json.loads(out.stdout)
+        cf.update({
+            "status": "available",
+            "verdict": r.get("verdict"),
+            "model_version": r.get("model_version"),
+            "schema_version": r.get("schema_version"),
+            "evaluated_at_utc": r.get("evaluated_at_utc"),
+            "window_qualification": r.get("window_qualification"),
+            "input": r.get("input"),
+            "segment_fit": r.get("segment_fit"),
+            "time_to_gate": r.get("time_to_gate"),
+            "capacity_gate_gib": r.get("capacity_gate_gib"),
+        })
+    else:
+        # PI-2 could not produce a verdict (missing/empty store, non-zero rc).
+        # Honest representation: no fabricated numbers, classification untouched.
+        cf["status"] = "unavailable"
+        cf["reason"] = (out.stderr or "no output").strip().splitlines()[-1][:200] \
+            if (out.stderr or "").strip() else "pi2 model returned no report"
+except Exception as e:  # noqa: BLE001 — evidence preservation outranks ambition
+    cf["status"] = "unavailable"
+    cf["reason"] = f"pi2 invocation failed: {type(e).__name__}"
+d["capacity_forecast"] = cf
+try:
+    json.dump(d, open(p, "w"), indent=2)
+except Exception:
+    pass
+PYEOF
+
 echo "[$RUN_ID] overall=$OVERALL exit=$EXIT_CODE ($OVERALL_NOTE)" | tee -a "$LOG"
 echo "[$RUN_ID] comparison: $COMPARISON" | tee -a "$LOG"
 exit "$EXIT_CODE"

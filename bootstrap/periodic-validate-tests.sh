@@ -273,6 +273,92 @@ check "T20: freshness anchored to runner start" "$t20a" "pass"
 grep -q 'WRAP_START_EPOCH' "$HERE/periodic-validate.sh" && t20b=fail || t20b=pass
 check "T20: post-exit anchor removed" "$t20b" "pass"
 
+echo "== T21: capacity_forecast block in retained record (M-R1) =="
+# M-R1: the wrapper invokes bootstrap/pi2_capacity_forecast.py (read-only,
+# advisory) and embeds a deterministic capacity_forecast block in the
+# retained record. The real wrapper end-to-end (validate-only mode) must
+# produce the block when PI-1 evidence exists, and the block must carry
+# the documented fields with no inference.
+L6_VALIDATE_ONLY=1 L6_EVIDENCE_DIR="$T/t21/ev" bash "$HERE/periodic-validate.sh" > "$T/t21.out" 2>&1
+t21_rc=$?
+case "$t21_rc" in 0|1|2|3) t21rc=pass ;; *) t21rc=fail ;; esac
+check "T21: wrapper reaches a classified outcome" "$t21rc" "pass"
+NEW21=$(ls -t "$T/t21/ev"/validation-*.json | head -1)
+python3 - "$NEW21" <<'PYEOF' && t21a=pass || t21a=fail
+import json, sys
+d = json.load(open(sys.argv[1]))
+cf = d.get("capacity_forecast")
+assert isinstance(cf, dict), "capacity_forecast block missing"
+# documented contract fields (advisory; never gates)
+for k in ("advisory", "verdict", "model_version", "evaluated_at_utc"):
+    assert k in cf, f"missing capacity_forecast.{k}"
+assert cf["advisory"] is True, "forecast must be marked advisory"
+assert cf["llm_inference_required"] == 0
+assert cf["verdict"] in ("FORECAST", "STABLE", "INSUFFICIENT_DATA"), cf["verdict"]
+PYEOF
+check "T21: capacity_forecast block present with contract fields" "$t21a" "pass"
+
+echo "== T22: capacity_forecast honest when PI-1 evidence missing =="
+# Empty snapshot dir -> the block must record unavailability honestly
+# (status unavailable/INSUFFICIENT_DATA), never fabricate values, and the
+# record must still validate; overall classification is unchanged.
+T22SNAP="$T/t22/snapshots"; mkdir -p "$T22SNAP"
+L6_VALIDATE_ONLY=1 L6_EVIDENCE_DIR="$T/t22/ev" L6_SNAPSHOT_DIR="$T22SNAP" \
+  bash "$HERE/periodic-validate.sh" > "$T/t22.out" 2>&1
+t22_rc=$?
+case "$t22_rc" in 0|1|2|3) t22rc=pass ;; *) t22rc=fail ;; esac
+check "T22: wrapper reaches a classified outcome (empty evidence)" "$t22rc" "pass"
+NEW22=$(ls -t "$T/t22/ev"/validation-*.json | head -1)
+python3 - "$NEW22" <<'PYEOF' && t22a=pass || t22a=fail
+import json, sys
+d = json.load(open(sys.argv[1]))
+cf = d.get("capacity_forecast")
+assert isinstance(cf, dict), "capacity_forecast block missing on empty evidence"
+assert cf["advisory"] is True
+# honest unavailability: status unavailable OR an INSUFFICIENT_DATA verdict
+ok = (cf.get("status") == "unavailable" or cf.get("verdict") == "INSUFFICIENT_DATA")
+assert ok, f"dishonest forecast block on empty evidence: {cf}"
+# no fabricated numbers: no slope/fit fields when unavailable
+if cf.get("status") == "unavailable":
+    assert "segment_fit" not in cf and "slope_gib_per_hour" not in cf, cf
+PYEOF
+check "T22: empty PI-1 evidence -> honest unavailable, no fabrication" "$t22a" "pass"
+
+echo "== T23: forecast block must not affect gates or classification =="
+# INVARIANT: the forecast is advisory. The overall_result/resource_gate
+# classification path must be byte-identical with and without the block.
+# Proven structurally: OVERALL/RGATE are computed BEFORE the block is
+# appended (order pinned here), and the classification function never
+# reads the forecast.
+python3 - "$HERE/periodic-validate.sh" <<'PYEOF' && t23a=pass || t23a=fail
+import sys
+src = open(sys.argv[1]).read()
+# the classification section begins at the gate check; the forecast block
+# must be appended strictly after ALL classification paths
+i_class = src.find('if [ "$GATE_BLOCKED" = "1" ]')
+i_cf = src.find('capacity_forecast')
+assert i_class != -1 and i_cf != -1
+assert i_cf > i_class, "capacity_forecast must be appended AFTER outcome classification"
+# advisory marker present; gate/classification logic never reads the forecast
+assert 'CF advisory' in src or '"advisory"' in src
+gate_section = src.split('GATE_BLOCKED=')[1].split('# ---- capacity_forecast')[0]
+assert 'capacity_forecast' not in gate_section
+PYEOF
+check "T23: forecast appended after classification; gates unaffected" "$t23a" "pass"
+
+echo "== T24: backward compatibility — historical records lack the field =="
+# Historical records (e.g. the retained 2026-11-11 record) have no
+# capacity_forecast key; the retention self-check and comparison logic
+# must accept records both with and without it.
+python3 - <<'PYEOF' && t24a=pass || t24a=fail
+import json
+old = json.load(open("docs/15-reproducibility/periodic/validation-l6-20261111T101700Z.json"))
+assert "capacity_forecast" not in old  # historical record untouched
+# retention self-check contract: identity + overall only
+assert old["overall_result"] in ("PASS", "FAIL", "BLOCKED", "EVIDENCE_ERROR")
+PYEOF
+check "T24: historical record (no forecast field) remains valid" "$t24a" "pass"
+
 echo "== RESULT: pass=$PASS fail=$FAILN =="
 [ "$FAILN" = "0" ] && echo "LEVEL 6 TESTS: ALL PASS" || echo "LEVEL 6 TESTS: FAILURES PRESENT"
 exit "$FAILN"
